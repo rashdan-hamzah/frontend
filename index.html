@@ -1,1429 +1,1116 @@
-<!DOCTYPE html>
+<!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Meow-Run-Harraz 😼</title>
+<meta charset="utf-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>Meow Mayhem: Alien Ambush — Split Screen</title>
 <style>
-html, body { margin:0; padding:0; height:100%; background:#0e0f13; color:#fff; font-family: system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, "Helvetica Neue", Arial; }
-#ui { position:fixed; inset:0; pointer-events:none; }
-.topbar { display:flex; gap:16px; align-items:center; padding:10px 12px; font-weight:700; text-shadow:0 2px 6px rgba(0,0,0,.5); }
-.pill { padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.08); backdrop-filter: blur(4px); }
-.score { display:flex; gap:8px; align-items:center; }
-.pchip { padding:4px 8px; border-radius:999px; font-size:14px; font-weight:800; }
-.p1 { background:#ff9aa2; color:#2a1a1d; }
-.p2 { background:#9ad1ff; color:#121a24; }
-.p3 { background:#b5ff9a; color:#0f1a10; }
-.p4 { background:#ffdf9a; color:#1a160f; }
-.p5 { background:#c4a2ff; color:#1a1024; }
-.ctr { position:fixed; left:50%; top:50%; transform:translate(-50%,-50%); text-align:center; }
-.btn { display:inline-block; padding:12px 18px; border-radius:12px; background:#2c2f3a; color:#fff; font-weight:800; letter-spacing:.3px; cursor:pointer; box-shadow:0 6px 20px rgba(0,0,0,.35); }
-.btn:active { transform:translate(-50%,-48%); }
-.hint { opacity:.8; margin-top:8px; font-size:14px; }
-canvas { display:block; width:100vw; height:100vh; }
-.bottom { position:fixed; bottom:10px; left:50%; transform:translateX(-50%); font-size:13px; opacity:.8; }
-.powerups { position:fixed; top:50px; right:10px; display:flex; flex-direction:column; gap:8px; align-items:flex-end; }
-.powerup { display:flex; gap:4px; align-items:center; padding:4px 8px; border-radius:8px; background:rgba(255,255,255,.1); font-size:13px; }
-.powerup-icon { font-size:20px; }
-.timer { position:fixed; top:10px; right:10px; padding:6px 10px; border-radius:999px; background:rgba(255,255,255,.08); backdrop-filter:blur(4px); font-weight:700; }
+  html,body{margin:0;height:100%;background:#05070a;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;overflow:hidden}
+  canvas{display:block;width:100vw;height:100vh}
 
-/* Night mode animation */
-@keyframes nightPulse {
-0% { background-color: rgba(0,0,40,.3); }
-50% { background-color: rgba(0,0,60,.4); }
-100% { background-color: rgba(0,0,40,.3); }
-}
-.night-mode { position:fixed; inset:0; pointer-events:none; background-color: rgba(0,0,40,.3); z-index:10; animation: nightPulse 5s infinite; }
+  /* UI */
+  #ui{position:fixed;inset:0;pointer-events:none}
+  .top{
+    position:fixed;left:0;right:0;top:0;
+    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
+    padding:10px 12px;
+    background:linear-gradient(to bottom, rgba(0,0,0,.70), rgba(0,0,0,.22));
+    border-bottom:1px solid rgba(255,255,255,.06);
+    backdrop-filter: blur(6px);
+    z-index:100;
+  }
+  .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.07);font-weight:900;letter-spacing:.2px}
+  .row{display:flex;gap:8px;flex-wrap:wrap}
+  .chip{padding:4px 8px;border-radius:999px;font-weight:1000;font-size:14px}
+  .p1{background:#ff9aa2;color:#2a1a1d}
+  .p2{background:#9ad1ff;color:#121a24}
+  .status{flex:1;opacity:.95;min-width:220px}
+  .bottom{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);opacity:.85;font-size:13px;z-index:100}
 
-/* Secret sauce animation */
-@keyframes secretSauceWarning {
-0% { background-color: rgba(255,0,0,.0); }
-50% { background-color: rgba(255,0,0,.15); }
-100% { background-color: rgba(255,0,0,.0); }
-}
-.warning { animation: secretSauceWarning 1s infinite; position:fixed; inset:0; pointer-events:none; z-index:11; }
+  /* Start */
+  .center{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;max-width:760px;padding:0 18px;z-index:100}
+  .btn{display:inline-block;padding:12px 18px;border-radius:12px;background:#1f2330;font-weight:1000;cursor:pointer;pointer-events:auto;box-shadow:0 10px 28px rgba(0,0,0,.55)}
+  .hint{opacity:.82;margin-top:10px;font-size:14px;line-height:1.35}
 
-/* Eating animation */
-@keyframes eatingPulse {
-0% { transform: translate(-50%, -50%) scale(1); opacity: 1; }
-50% { transform: translate(-50%, -50%) scale(1.2); opacity: 0.7; }
-100% { transform: translate(-50%, -50%) scale(0.1); opacity: 0; }
-}
-.eating { animation: eatingPulse 1s forwards; }
+  /* Split divider */
+  .divider{
+    position:fixed;top:60px;bottom:0;left:50%;
+    width:2px;background:rgba(255,255,255,.08);
+    box-shadow:0 0 18px rgba(120,255,220,.06);
+    z-index:20;pointer-events:none;
+  }
 
-/* Player cat images */
-.cat-img {
-position: absolute;
-transform: translate(-50%, -50%);
-width: 50px;
-height: 50px;
-object-fit: cover;
-border-radius: 50%;
-}
+  /* Cat meme GIF layer (clipped into each viewport) */
+  #catsLayer{position:fixed;inset:0;pointer-events:none;z-index:30}
+  .cat-img{
+    position:absolute;
+    transform:translate(-50%,-50%);
+    width:56px;height:56px;
+    object-fit:cover;border-radius:50%;
+    filter:contrast(1.08) brightness(.95) saturate(1.05);
+    box-shadow:0 0 0 2px rgba(255,255,255,.10);
+  }
+  .amok{filter:contrast(1.25) brightness(1.05) saturate(1.25) drop-shadow(0 0 16px rgba(255,120,0,.55));}
+  .panic{animation:panicShake .16s infinite;}
+  @keyframes panicShake{
+    0%{transform:translate(-50%,-50%) rotate(-2deg)}
+    50%{transform:translate(-50%,-50%) rotate(2deg)}
+    100%{transform:translate(-50%,-50%) rotate(-2deg)}
+  }
+  .abducting{filter:contrast(1.1) brightness(1.05) saturate(1.1) drop-shadow(0 0 18px rgba(140,255,220,.55));}
 
-/* Sound controls */
-.sound-control {
-  position: fixed;
-  top: 10px;
-  left: 10px;
-  background: rgba(255,255,255,0.1);
-  border-radius: 50%;
-  width: 40px;
-  height: 40px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  z-index: 100;
-  font-size: 20px;
-  pointer-events: auto;
-  transition: background-color 0.3s;
-}
-.sound-control:hover { background: rgba(255,255,255,0.2); }
+  /* Scary overlays */
+  .scanlines{
+    position:fixed;inset:0;pointer-events:none;z-index:60;
+    background:repeating-linear-gradient(to bottom,
+      rgba(255,255,255,.04) 0px,
+      rgba(255,255,255,.04) 1px,
+      rgba(0,0,0,0) 3px,
+      rgba(0,0,0,0) 6px);
+    mix-blend-mode:overlay;opacity:.22;
+  }
+  .vignette{
+    position:fixed;inset:0;pointer-events:none;z-index:61;
+    background:radial-gradient(circle at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,.35) 55%, rgba(0,0,0,.78) 100%);
+  }
 
-/* Victory Animation */
-@keyframes flyAcross {
-  0% { transform: translate(-100%, -50%); }
-  100% { transform: translate(100vw, -50%); }
-}
-.victory-animation {
-  position: fixed;
-  top: 50%;
-  left: 0;
-  width: 200px;
-  height: 100px;
-  z-index: 20;
-  animation: flyAcross 3s linear;
-  pointer-events: none;
-}
+  /* Jumpscare overlay (distortion + shake) */
+  .jumpscare{
+    position:fixed;inset:0;pointer-events:none;z-index:80;display:none;
+    background:
+      radial-gradient(circle at 50% 50%, rgba(255,0,80,.12), rgba(0,0,0,0) 55%),
+      repeating-linear-gradient(120deg, rgba(255,90,200,.10) 0px, rgba(255,90,200,.10) 8px, rgba(0,0,0,0) 16px, rgba(0,0,0,0) 28px);
+    mix-blend-mode:screen;
+    animation:jPulse .55s ease-in-out 0s 1;
+  }
+  @keyframes jPulse{
+    0%{opacity:0;filter:blur(0px)}
+    20%{opacity:1;filter:blur(0.4px)}
+    100%{opacity:0;filter:blur(0px)}
+  }
 
-/* Confetti for victory */
-.confetti {
-  position: fixed;
-  width: 10px;
-  height: 10px;
-  z-index: 19;
-  pointer-events: none;
-  animation: confetti-fall linear forwards;
-}
-@keyframes confetti-fall {
-  0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
-  100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
-}
+  .shake{
+    animation:screenShake .24s linear 0s 2;
+  }
+  @keyframes screenShake{
+    0%{transform:translate(0,0)}
+    25%{transform:translate(6px,-5px)}
+    50%{transform:translate(-6px,4px)}
+    75%{transform:translate(5px,6px)}
+    100%{transform:translate(0,0)}
+  }
 
-/* Crown for winner */
-.crown {
-  position: absolute;
-  top: -25px;
-  left: 50%;
-  transform: translateX(-50%);
-  font-size: 24px;
-  z-index: 21;
-  filter: drop-shadow(0 0 5px gold);
-}
-
-/* Volume slider popup */
-.volume-popup {
-  position: fixed;
-  top: 55px;
-  left: 10px;
-  background: rgba(40,40,50,0.9);
-  padding: 10px;
-  border-radius: 10px;
-  z-index: 101;
-  display: none;
-  width: 150px;
-}
-.volume-slider { width: 100%; cursor: pointer; }
-.volume-label { display: block; text-align: center; margin-bottom: 5px; font-size: 14px; }
+  /* Found flash */
+  .foundFlash{
+    position:fixed;inset:0;pointer-events:none;z-index:75;
+    background:rgba(255,40,40,.18);
+    animation:flash 450ms ease-in-out 0s 2;
+    display:none;
+  }
+  @keyframes flash{
+    0%{opacity:0}
+    30%{opacity:1}
+    100%{opacity:0}
+  }
 </style>
 </head>
 <body>
 <canvas id="game"></canvas>
 
+<div id="catsLayer"></div>
+
 <div id="ui">
-  <div class="topbar">
-    <div class="pill">😼 <strong>Meow Mayhem</strong></div>
-    <div id="scores" class="score"></div>
-    <div class="pill" id="status"></div>
+  <div class="top">
+    <div class="pill">👽 Alien Ambush — Split Screen</div>
+    <div class="row" id="hud"></div>
+    <div class="pill" id="timer">Stealth up: stand still in bushes</div>
+    <div class="status" id="status"></div>
   </div>
 
-  <div id="center" class="ctr">
-    <div style="font-size:42px; font-weight:900; margin-bottom:10px;">Meow Mayhem 😼</div>
-    <div style="font-size:18px; opacity:.9; margin-bottom:20px;">Collect 🐟. Bonk friends. Avoid chaos. First to <span id="targetPts">30</span> wins.</div>
+  <div class="center" id="startScreen">
+    <div style="font-size:44px;font-weight:1000;margin-bottom:6px;">Meow Mayhem: Alien Ambush</div>
+    <div style="opacity:.9;margin-bottom:16px;">
+      Split-screen stealth. Hide behind bushes 🌿 & trees 🌳. Avoid 👽. Touch “?” to go AMOK.
+    </div>
     <div class="btn" id="startBtn">Press ENTER or Click to Start</div>
-    <div class="hint">P1: WASD + F • P2: Arrows + / • (Enable up to 5 players in code)</div>
+    <div class="hint">
+      P1: WASD + F (dash) • P2: Arrows + / (dash)<br/>
+      <b>Hiding meter</b> increases when standing still in cover. Dashing reduces it.<br/>
+      If abducted, teammate can <b>bump</b> you to interrupt.
+    </div>
   </div>
 
-  <div id="powerups" class="powerups"></div>
-  <div id="timer" class="timer">Chaos in: 30s</div>
   <div class="bottom">Pause: <b>P</b> • Restart: <b>R</b></div>
 </div>
 
-<div id="nightMode" class="night-mode" style="display:none;"></div>
-<div id="warning" class="warning" style="display:none;"></div>
-
-<div class="sound-control" id="soundToggle">🔊</div>
-<div class="volume-popup" id="volumePopup">
-  <span class="volume-label">Volume: 100%</span>
-  <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100">
-</div>
-
-<div id="catImagesContainer" style="position:absolute; top:0; left:0; pointer-events:none;"></div>
-
-<!-- Audio elements -->
-<audio id="meowSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADFgC1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAxZAr2jRAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
-<audio id="superMeowSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAGPgC1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAABj7DyBnPAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
-<audio id="rumbaSoundLoop" preload="auto" loop src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADwAC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAaAAAAAAAAAA8AwnKQGAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
-<audio id="dogeSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADwAC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAXuAAAAAAAAA8AkyY0gAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
-<audio id="treatSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADwAC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAWYAAAAAAAAA8AtZdOBAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
-<audio id="laserSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADwAC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYzAAAAAAAAA8CNTwkBAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
-<audio id="tornadoSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAEHgC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAX5AAAAAAAABCWG4TOOAAAAAAAAAAAAAAAAAAAAAAAA"></audio>
-<audio id="chaosSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAD8AC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAWDAAAAAAAAA/DQoxTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="></audio>
-<audio id="winSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAGPgC1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAY1AAAAAAAABJ7YpM3kAAAAAAAAAAAAAAAAAAAAAA=="></audio>
-
-<div id="victoryContainer" style="display:none; position:fixed; inset:0; z-index:15; pointer-events:none;"></div>
+<div class="divider"></div>
+<div class="scanlines"></div>
+<div class="vignette"></div>
+<div class="jumpscare" id="jumpscare"></div>
+<div class="foundFlash" id="foundFlash"></div>
 
 <script>
 (() => {
-// ======== CONFIG ========
-const CONFIG = {
-  targetScore: 30,
-  maxPlayers: 2,
-  playerRadius: 25,
-  playerSpeed: 2.4,
-  friction: 0.86,
-  meowCooldownMs: 1100,
-  meowKnockRange: 140,
-  meowKnockForce: 9.5,
-  meowParticles: 12,
-  treatRadius: 10,
-  treatsOnField: 6,
-  treatRespawnMs: 1600,
-  dogeEveryMs: 9000,
-  dogeSpeed: 2.0,
-  dogeEatTimeMs: 1000,
-  roombas: 2,
-  laserCount: 5,
-  laserActive: true,
-  laserInvertMs: 2000,
-  boundsPadding: 8,
-  powerUpChance: 0.004,
-  weatherEvents: true,
-  weatherDuration: 8000,
-  weatherCooldown: 5000,
-  secretSauceInterval: 30000,
-  secretSauceDuration: 8000,
-  soundEnabled: true,
-  masterVolume: 1.0,
-};
+  // ====== CONFIG ======
+  const CONFIG = {
+    players: 2,
+    lives: 3,
 
-// ======== SOUND MANAGER ========
-const SoundManager = {
-  sounds: {
-    meow: document.getElementById('meowSound'),
-    superMeow: document.getElementById('superMeowSound'),
-    roomba: document.getElementById('rumbaSoundLoop'),
-    doge: document.getElementById('dogeSound'),
-    treat: document.getElementById('treatSound'),
-    laser: document.getElementById('laserSound'),
-    tornado: document.getElementById('tornadoSound'),
-    chaos: document.getElementById('chaosSound'),
-    win: document.getElementById('winSound')
-  },
+    worldW: 2200,
+    worldH: 1400,
 
-  init() {
-    const soundToggle = document.getElementById('soundToggle');
-    const volumePopup = document.getElementById('volumePopup');
-    const volumeSlider = document.getElementById('volumeSlider');
-    const volumeLabel = document.querySelector('.volume-label');
+    // split view / camera
+    topHudH: 60,
 
-    soundToggle.addEventListener('click', () => {
-      CONFIG.soundEnabled = !CONFIG.soundEnabled;
-      soundToggle.textContent = CONFIG.soundEnabled ? '🔊' : '🔇';
+    playerBaseSpeed: 2.5,
+    playerFriction: 0.86,
+    playerR: 22,
 
-      if (CONFIG.soundEnabled) {
-        volumePopup.style.display = 'block';
-        setTimeout(() => { volumePopup.style.display = 'none'; }, 5000);
-      } else {
-        this.stopAll();
-        volumePopup.style.display = 'none';
-      }
-    });
+    dashBoost: 4.6,
+    dashMs: 260,
+    dashCooldownMs: 1100,
 
-    let pressTimer;
-    soundToggle.addEventListener('mousedown', () => {
-      pressTimer = setTimeout(() => {
-        volumePopup.style.display = volumePopup.style.display === 'block' ? 'none' : 'block';
-      }, 500);
-    });
-    soundToggle.addEventListener('mouseup', () => clearTimeout(pressTimer));
-    soundToggle.addEventListener('mouseleave', () => clearTimeout(pressTimer));
+    // stealth meter
+    stealthGainPerSec: 0.22,   // in-cover + still
+    stealthLoseDash: 0.22,     // on dash
+    stealthLoseMovePerSec: 0.10, // moving reduces stealth
+    stealthMin: 0,
+    stealthMax: 1,
 
-    volumeSlider.addEventListener('input', () => {
-      const volume = volumeSlider.value / 100;
-      CONFIG.masterVolume = volume;
-      volumeLabel.textContent = `Volume: ${volumeSlider.value}%`;
-      Object.values(this.sounds).forEach(sound => { sound.volume = volume; });
-    });
+    // alien vision baseline (modified by stealth)
+    alienBaseView: 320,
+    alienBaseFovCos: Math.cos((75 * Math.PI/180)),
+    alienLoseSightMs: 750,
 
-    document.addEventListener('click', (e) => {
-      if (e.target !== volumePopup && e.target !== soundToggle && !volumePopup.contains(e.target)) {
-        volumePopup.style.display = 'none';
-      }
-    });
+    alienBase: 7,
+    alienR: 18,
+    alienPatrolSpeed: 1.55,
+    alienChaseSpeed: 2.65,
 
-    Object.values(this.sounds).forEach(sound => { sound.volume = CONFIG.masterVolume; });
-  },
+    // abduction
+    abductLockMs: 1050,
+    abductPullPerTick: 3.2,       // visual pull upward
+    abductInterruptRadius: 40,    // teammate bump
+    abductInvulnMs: 1300,
 
-  play(soundName, options = {}) {
-    if (!CONFIG.soundEnabled) return;
-    const sound = this.sounds[soundName];
-    if (!sound) return;
+    // question / amok
+    questionR: 18,
+    amokMs: 11000,
+    amokSizeMul: 2.05,
+    amokEatMul: 1.25,
 
-    if (!options.overlap && !sound.paused && sound.currentTime > 0) return;
+    // obstacles
+    obstacles: 34,
 
-    if (options.overlap) {
-      const tempSound = sound.cloneNode();
-      tempSound.volume = CONFIG.masterVolume;
-      tempSound.play().catch(()=>{});
-      tempSound.onended = () => tempSound.remove();
-    } else {
-      sound.currentTime = 0;
-      sound.play().catch(()=>{});
-    }
-  },
+    // jumpscare cooldown
+    jumpCooldownMs: 2600,
+  };
 
-  loop(soundName) {
-    if (!CONFIG.soundEnabled) return;
-    const sound = this.sounds[soundName];
-    if (!sound) return;
-    sound.loop = true;
-    sound.play().catch(()=>{});
-  },
+  // ====== CAT MEME GIFS (your originals) ======
+  const CAT_GIFS = [
+    "https://media.tenor.com/SuVGs-GL7RoAAAAi/shocked-shocked-cat.gif",
+    "https://media.tenor.com/Ym6VeAcZoTcAAAAi/aaaah-cat.gif",
+    "https://media.tenor.com/1Z8PTLFT8HUAAAAi/voices-cat.gif",
+    "https://media.tenor.com/T_avUEk3aWwAAAAi/catgroove7tv-catgroove.gif",
+    "https://media.tenor.com/y-Ew-QGLcpYAAAAi/shrek-cat.gif",
+  ];
+  const SKINS = [
+    { name:"Grumpy", chip:"p1", color:"#ff9aa2", gifIndex: 0, emoji:"😾" },
+    { name:"Nyan", chip:"p2", color:"#9ad1ff", gifIndex: 1, emoji:"🌈" },
+  ];
+  const CONTROL_SETS = [
+    { up:'w', down:'s', left:'a', right:'d', dash:'f' },
+    { up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight', dash:'/' },
+  ];
 
-  stop(soundName) {
-    const sound = this.sounds[soundName];
-    if (!sound) return;
-    sound.pause();
-    sound.currentTime = 0;
-  },
-
-  stopAll() {
-    Object.values(this.sounds).forEach(sound => {
-      sound.pause();
-      sound.currentTime = 0;
-    });
-  },
-};
-
-// Cat GIFs
-const CAT_GIFS = [
-  "https://media.tenor.com/SuVGs-GL7RoAAAAi/shocked-shocked-cat.gif",
-  "https://media.tenor.com/Ym6VeAcZoTcAAAAi/aaaah-cat.gif",
-  "https://media.tenor.com/1Z8PTLFT8HUAAAAi/voices-cat.gif",
-  "https://media.tenor.com/T_avUEk3aWwAAAAi/catgroove7tv-catgroove.gif",
-  "https://media.tenor.com/y-Ew-QGLcpYAAAAi/shrek-cat.gif",
-];
-
-const SKINS = [
-  { name:"Grumpy", emoji:"😾", chip:"p1", color:"#ff9aa2", gifIndex: 0 },
-  { name:"Nyan", emoji:"🌈", chip:"p2", color:"#9ad1ff", gifIndex: 1 },
-  { name:"Keyboard", emoji:"🎹", chip:"p3", color:"#b5ff9a", gifIndex: 2 },
-  { name:"Bongo", emoji:"🥁", chip:"p4", color:"#ffdf9a", gifIndex: 3 },
-  { name:"Shrek", emoji:"👹", chip:"p5", color:"#c4a2ff", gifIndex: 4 },
-];
-
-const VICTORY_GIFS = [
-  "https://media.tenor.com/eAKuQI-yYD0AAAAi/gato-cat.gif",
-  "https://media.tenor.com/4-5UsuINt9EAAAAi/rainbow-cat-rainbow.gif",
-  "https://media.tenor.com/AUicYpBbFF8AAAAi/piano-cat.gif",
-  "https://media.tenor.com/Sv8-f_Fla2cAAAAi/bongo-cat-drum.gif",
-  "https://media.tenor.com/JZtOQKh_UmUAAAAi/shrek-cat.gif",
-];
-
-// Power-ups
-const POWERUPS = [
-  { name: "Speed Boost", emoji: "⚡", color: "#ffff00", duration: 5000, effect: (player) => {
-    player.speedBoost = 1.6;
-    return () => player.speedBoost = 1.0;
-  }},
-  { name: "Shield", emoji: "🛡️", color: "#00ffff", duration: 6000, effect: (player) => {
-    player.hasShield = true;
-    return () => player.hasShield = false;
-  }},
-  { name: "Giant Mode", emoji: "🦖", color: "#ff00ff", duration: 7000, effect: (player) => {
-    player.r *= 1.6;
-    updateCatImageSize(player);
-    return () => {
-      player.r = CONFIG.playerRadius;
-      updateCatImageSize(player);
-    };
-  }},
-  { name: "Super Meow", emoji: "🔊", color: "#ff6600", duration: 8000, effect: (player) => {
-    player.superMeow = true;
-    return () => player.superMeow = false;
-  }},
-  { name: "Treat Magnet", emoji: "🧲", color: "#cc33ff", duration: 10000, effect: (player) => {
-    player.treatMagnet = true;
-    return () => player.treatMagnet = false;
-  }},
-];
-
-// Weather events
-const WEATHER_EVENTS = [
-  { name: "Night Mode",
-    onStart: () => { document.getElementById("nightMode").style.display = "block"; updateStatus("🌙 Night Mode - Watch out for invisible obstacles!"); },
-    onEnd: () => { document.getElementById("nightMode").style.display = "none"; updateStatus(""); }
-  },
-  { name: "Slippery Floor",
-    onStart: () => { CONFIG.friction = 0.96; updateStatus("🧊 Slippery Floor - Hard to control!"); },
-    onEnd: () => { CONFIG.friction = 0.86; updateStatus(""); }
-  },
-  { name: "Tornado",
-    onStart: () => { spawnTornado(); updateStatus("🌪️ Tornado Alert - Run for cover!"); SoundManager.loop('tornado'); },
-    onEnd: () => { tornado = null; updateStatus(""); SoundManager.stop('tornado'); }
-  },
-  { name: "Super Speed",
-    onStart: () => { CONFIG.playerSpeed *= 1.5; updateStatus("💨 Everyone moves super fast!"); },
-    onEnd: () => { CONFIG.playerSpeed /= 1.5; updateStatus(""); }
-  }
-];
-
-// ======== SETUP ========
-const canvas = document.getElementById('game');
-const ctx = canvas.getContext('2d');
-const catImagesContainer = document.getElementById('catImagesContainer');
-const victoryContainer = document.getElementById('victoryContainer');
-
-let W = 0, H = 0;
-const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
-function resize() {
-  W = Math.floor(window.innerWidth);
-  H = Math.floor(window.innerHeight);
-  canvas.width = Math.floor(W * DPR);
-  canvas.height = Math.floor(H * DPR);
-  canvas.style.width = W + 'px';
-  canvas.style.height = H + 'px';
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  catImagesContainer.style.width = W + 'px';
-  catImagesContainer.style.height = H + 'px';
-}
-resize();
-window.addEventListener('resize', resize);
-
-// ======== INPUT ========
-const keys = new Set();
-window.addEventListener('keydown', (e) => {
-  keys.add(e.key);
-  if (e.key === 'Enter') start();
-  if (e.key === ' ') e.preventDefault();
-});
-window.addEventListener('keyup', (e) => keys.delete(e.key));
-
-// ======== UTIL ========
-const rnd = (a,b)=> a + Math.random()*(b-a);
-function dist(a,b){ const dx=a.x-b.x, dy=a.y-b.y; return Math.hypot(dx,dy); }
-function circleCollide(ax,ay,ar, bx,by,br){ return Math.hypot(ax-bx, ay-by) <= ar+br; }
-function edgeBounce(entity, r){
-  if (entity.x < r) { entity.x = r; entity.vx = Math.abs(entity.vx)*0.6; }
-  if (entity.x > W - r) { entity.x = W - r; entity.vx = -Math.abs(entity.vx)*0.6; }
-  if (entity.y < r) { entity.y = r; entity.vy = Math.abs(entity.vy)*0.6; }
-  if (entity.y > H - r) { entity.y = H - r; entity.vy = -Math.abs(entity.vy)*0.6; }
-}
-
-// ======== ENTITIES ========
-const players = [];
-const treats = [];
-const roombas = [];
-const meowBursts = [];
-const meowParticles = [];
-const powerUps = [];
-const lasers = [];
-
-let doge = null;
-let tornado = null;
-let currentWeather = null;
-let nextWeatherEvent = 0;
-let nextSecretSauce = 0;
-let secretSauceActive = false;
-let secretSauceCountdown = 30;
-let roombaSound = false;
-
-const CONTROL_SETS = [
-  { up:'w', down:'s', left:'a', right:'d', meow:'f' },
-  { up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight', meow:'/' },
-  { up:'i', down:'k', left:'j', right:'l', meow:'h' },
-  { up:'t', down:'g', left:'f', right:'h', meow:'y' },
-  { up:'8', down:'5', left:'4', right:'6', meow:'0' },
-];
-
-// Victory stuff
-function createConfetti() {
-  const colors = ['#ff9aa2', '#9ad1ff', '#b5ff9a', '#ffdf9a', '#c4a2ff'];
-  const confettiCount = 100;
-  for (let i = 0; i < confettiCount; i++) {
-    const confetti = document.createElement('div');
-    confetti.className = 'confetti';
-    confetti.style.left = `${rnd(0, 100)}%`;
-    confetti.style.width = `${rnd(5, 15)}px`;
-    confetti.style.height = `${rnd(5, 15)}px`;
-    confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
-    confetti.style.opacity = rnd(0.7, 1);
-    confetti.style.animationDuration = `${rnd(2, 5)}s`;
-    victoryContainer.appendChild(confetti);
-  }
-  setTimeout(() => { victoryContainer.innerHTML = ''; }, 5000);
-}
-
-function showVictoryAnimation(player) {
-  victoryContainer.innerHTML = '';
-  victoryContainer.style.display = 'block';
-  createConfetti();
-
-  const gifIndex = player.skin.gifIndex;
-  const victoryGif = document.createElement('img');
-  victoryGif.className = 'victory-animation';
-  victoryGif.src = VICTORY_GIFS[gifIndex];
-  victoryContainer.appendChild(victoryGif);
-
-  // Crown: can't append to <img>, so append to container instead (positioned near player)
-  const crown = document.createElement('div');
-  crown.className = 'crown';
-  crown.textContent = '👑';
-  crown.style.left = `${player.x}px`;
-  crown.style.top = `${player.y - player.r}px`;
-  crown.style.transform = 'translate(-50%, -50%)';
-  victoryContainer.appendChild(crown);
-
-  SoundManager.play('win');
-  setTimeout(() => { victoryContainer.style.display = 'none'; }, 5000);
-}
-
-function createCatImage(player) {
-  const img = document.createElement('img');
-  img.className = 'cat-img';
-  img.src = CAT_GIFS[player.skin.gifIndex];
-  img.id = `cat-${player.id}`;
-  img.style.width = `${player.r * 2}px`;
-  img.style.height = `${player.r * 2}px`;
-  catImagesContainer.appendChild(img);
-  return img;
-}
-function updateCatImageSize(player) {
-  if (player.imgElement) {
-    player.imgElement.style.width = `${player.r * 2}px`;
-    player.imgElement.style.height = `${player.r * 2}px`;
-  }
-}
-function updateCatImagePositions() {
-  players.forEach(p => {
-    if (!p?.imgElement) return;
-    p.imgElement.style.left = `${p.x}px`;
-    p.imgElement.style.top = `${p.y}px`;
-
-    if (p.beingEaten) p.imgElement.classList.add('eating');
-    else p.imgElement.classList.remove('eating');
-
-    if (p.hasShield) p.imgElement.style.boxShadow = '0 0 10px 5px rgba(0, 255, 255, 0.7)';
-    else if (p.isBeingMeowed) p.imgElement.style.boxShadow = '0 0 8px 4px rgba(255, 255, 255, 0.6)';
-    else p.imgElement.style.boxShadow = 'none';
+  // ====== INPUT ======
+  const keys = new Set();
+  addEventListener('keydown', (e) => {
+    keys.add(e.key);
+    if (e.key === 'Enter') start();
+    if (e.key === ' ') e.preventDefault();
   });
-}
+  addEventListener('keyup', (e) => keys.delete(e.key));
 
-function spawnPlayers(n=CONFIG.maxPlayers){
-  catImagesContainer.innerHTML = '';
-  players.length = 0;
-  for(let i=0;i<n;i++){
-    const skin = SKINS[i % SKINS.length];
-    const p = {
-      id:i,
-      name: skin.name,
-      emoji: skin.emoji,
-      color: skin.color,
-      chip: skin.chip,
-      skin: skin,
-      x: W*(0.2 + 0.2*i),
-      y: H*(0.3 + 0.1*i),
+  // ====== CANVAS ======
+  const canvas = document.getElementById('game');
+  const ctx = canvas.getContext('2d');
+  let W=0,H=0;
+  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
+  function resize(){
+    W = Math.floor(innerWidth);
+    H = Math.floor(innerHeight);
+    canvas.width = Math.floor(W*DPR);
+    canvas.height = Math.floor(H*DPR);
+    canvas.style.width = W+"px";
+    canvas.style.height = H+"px";
+    ctx.setTransform(DPR,0,0,DPR,0,0);
+  }
+  resize();
+  addEventListener('resize', resize);
+
+  // ====== UI ======
+  const ui = {
+    hud: document.getElementById('hud'),
+    timer: document.getElementById('timer'),
+    status: document.getElementById('status'),
+    startScreen: document.getElementById('startScreen'),
+    startBtn: document.getElementById('startBtn'),
+    catsLayer: document.getElementById('catsLayer'),
+    jumpscare: document.getElementById('jumpscare'),
+    foundFlash: document.getElementById('foundFlash'),
+  };
+  function setStatus(s){ ui.status.textContent = s || ""; }
+
+  function doJumpscare(){
+    const now = performance.now();
+    if (now < game.lastJumpAt + CONFIG.jumpCooldownMs) return;
+    game.lastJumpAt = now;
+
+    ui.jumpscare.style.display = 'block';
+    // restart animation
+    ui.jumpscare.style.animation = 'none';
+    void ui.jumpscare.offsetHeight;
+    ui.jumpscare.style.animation = '';
+
+    document.body.classList.add('shake');
+    setTimeout(()=> document.body.classList.remove('shake'), 520);
+    setTimeout(()=> ui.jumpscare.style.display='none', 650);
+  }
+
+  function flashFound(){
+    ui.foundFlash.style.display = 'block';
+    ui.foundFlash.style.animation = 'none';
+    void ui.foundFlash.offsetHeight;
+    ui.foundFlash.style.animation = '';
+    setTimeout(()=> ui.foundFlash.style.display='none', 900);
+  }
+
+  // ====== UTIL ======
+  const rnd = (a,b)=> a + Math.random()*(b-a);
+  const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
+  function circleHit(ax,ay,ar,bx,by,br){ return Math.hypot(ax-bx, ay-by) <= ar+br; }
+  function segCircle(x1,y1,x2,y2,cx,cy,r){
+    const dx=x2-x1, dy=y2-y1;
+    const l2=dx*dx+dy*dy;
+    if (l2===0) return Math.hypot(cx-x1, cy-y1) <= r;
+    let t=((cx-x1)*dx+(cy-y1)*dy)/l2;
+    t=clamp(t,0,1);
+    const px=x1+t*dx, py=y1+t*dy;
+    return Math.hypot(cx-px, cy-py) <= r;
+  }
+
+  // ====== ENTITIES ======
+  const players = [];
+  const aliens = [];
+  const obstacles = [];
+  let questionBox = null;
+
+  const cams = [
+    { x:0, y:0, w:0, h:0 }, // left view
+    { x:0, y:0, w:0, h:0 }, // right view
+  ];
+
+  const game = {
+    running:false,
+    paused:false,
+    last: performance.now(),
+    acc: 0,
+    dt: 1000/60,
+    lastJumpAt: -99999,
+  };
+
+  // ====== WORLD / CAMERA ======
+  function updateViewports(){
+    const top = CONFIG.topHudH;
+    const vh = H - top;
+    const vw = Math.floor(W/2);
+    cams[0].w = vw;
+    cams[0].h = vh;
+    cams[0].x = 0;
+    cams[0].y = top;
+
+    cams[1].w = W - vw;
+    cams[1].h = vh;
+    cams[1].x = vw;
+    cams[1].y = top;
+  }
+  updateViewports();
+
+  function clampCamToWorld(cx, cy, vw, vh){
+    const x = clamp(cx, 0, Math.max(0, CONFIG.worldW - vw));
+    const y = clamp(cy, 0, Math.max(0, CONFIG.worldH - vh));
+    return { x, y };
+  }
+
+  function updateCams(){
+    updateViewports();
+    for (let i=0;i<players.length;i++){
+      const p = players[i];
+      const vw = cams[i].w;
+      const vh = cams[i].h;
+
+      const cx = p.x - vw/2;
+      const cy = p.y - vh/2;
+      const cl = clampCamToWorld(cx, cy, vw, vh);
+      cams[i].wx = cl.x;
+      cams[i].wy = cl.y;
+    }
+  }
+
+  // ====== LOS / COVER ======
+  function blockedLOS(ax,ay,bx,by){
+    for (const o of obstacles){
+      if (segCircle(ax,ay,bx,by, o.x,o.y, o.blockR)) return true;
+    }
+    return false;
+  }
+
+  function playerInCover(p){
+    // in cover if inside any obstacle radius (bush/tree)
+    for (const o of obstacles){
+      if (Math.hypot(p.x-o.x, p.y-o.y) <= o.r*0.92) return true;
+    }
+    return false;
+  }
+
+  // ====== CAT GIFS (split clipped) ======
+  // Each player has an img in each viewport (so both halves show the correct player positions)
+  function createCatImgElement(playerId, viewId){
+    const img = document.createElement('img');
+    img.className = 'cat-img';
+    img.dataset.playerId = String(playerId);
+    img.dataset.viewId = String(viewId);
+    ui.catsLayer.appendChild(img);
+    return img;
+  }
+
+  function buildCatImgs(){
+    ui.catsLayer.innerHTML = '';
+    for (let pid=0; pid<players.length; pid++){
+      for (let vid=0; vid<2; vid++){
+        const img = createCatImgElement(pid, vid);
+        img.src = CAT_GIFS[players[pid].skin.gifIndex];
+        players[pid].imgs[vid] = img;
+      }
+    }
+  }
+
+  function updateCatImgs(){
+    const now = performance.now();
+    for (let pid=0; pid<players.length; pid++){
+      const p = players[pid];
+      for (let vid=0; vid<2; vid++){
+        const cam = cams[vid];
+        const img = p.imgs[vid];
+        if (!img) continue;
+
+        // clip into viewport
+        img.style.clipPath = `inset(${cam.y}px ${W-(cam.x+cam.w)}px ${H-(cam.y+cam.h)}px ${cam.x}px)`;
+
+        // world->screen for that viewport
+        const sx = cam.x + (p.x - cam.wx);
+        const sy = cam.y + (p.y - cam.wy);
+
+        const amok = now < p.amokUntil;
+        const baseR = CONFIG.playerR;
+        const r = amok ? baseR*CONFIG.amokSizeMul : baseR;
+
+        img.style.left = `${sx}px`;
+        img.style.top = `${sy}px`;
+        img.style.width = `${r*2}px`;
+        img.style.height = `${r*2}px`;
+
+        img.classList.toggle('amok', amok);
+        img.classList.toggle('panic', now < p.dashUntil);
+        img.classList.toggle('abducting', p.abducting);
+
+        // blink when invuln
+        if (now < p.invulnUntil) {
+          img.style.opacity = (Math.floor(now/90)%2) ? '0.35' : '1';
+        } else {
+          img.style.opacity = '1';
+        }
+
+        // small outline for each player
+        img.style.boxShadow = amok
+          ? '0 0 0 3px rgba(255,160,60,.28), 0 0 26px rgba(255,120,0,.55)'
+          : (pid===0
+              ? '0 0 0 2px rgba(255,255,255,.10), 0 0 16px rgba(255,90,110,.18)'
+              : '0 0 0 2px rgba(255,255,255,.10), 0 0 16px rgba(120,170,255,.18)');
+      }
+    }
+  }
+
+  // ====== SPAWNS ======
+  function spawnObstacles(){
+    obstacles.length=0;
+    for (let i=0;i<CONFIG.obstacles;i++){
+      const kind = Math.random()<0.55 ? 'bush' : 'tree';
+      const r = kind==='bush' ? rnd(30, 48) : rnd(38, 64);
+      obstacles.push({
+        kind,
+        x: rnd(120, CONFIG.worldW-120),
+        y: rnd(120, CONFIG.worldH-120),
+        r,
+        blockR: r*(kind==='bush'?0.95:1.05),
+        sway: rnd(0, Math.PI*2),
+      });
+    }
+  }
+
+  function spawnQuestionBox(){
+    questionBox = {
+      x: rnd(140, CONFIG.worldW-140),
+      y: rnd(140, CONFIG.worldH-140),
+      r: CONFIG.questionR,
+      bob: 0
+    };
+  }
+
+  function spawnPlayers(){
+    players.length=0;
+    for (let i=0;i<CONFIG.players;i++){
+      const skin = SKINS[i];
+      players.push({
+        id:i,
+        skin,
+        x: i===0 ? 260 : CONFIG.worldW-260,
+        y: CONFIG.worldH/2 + (i===0 ? -70 : 70),
+        vx:0, vy:0,
+
+        livesLeft: CONFIG.lives,
+        dead:false,
+
+        controls: CONTROL_SETS[i],
+
+        dashUntil:0,
+        dashCdUntil:0,
+
+        stealth: 0.2,
+        lastX: 0,
+        lastY: 0,
+
+        invulnUntil: 0,
+
+        amokUntil: 0,
+
+        // abduction
+        abducting: false,
+        abductByAlien: null,
+        abductStartAt: 0,
+        abductLift: 0,
+
+        imgs: [null, null],
+      });
+    }
+    buildCatImgs();
+    renderHUD();
+  }
+
+  function spawnAlien(){
+    // spawn on edges
+    const side = Math.floor(rnd(0,4));
+    let x,y;
+    if (side===0){ x=rnd(30, CONFIG.worldW-30); y=30; }
+    else if (side===1){ x=rnd(30, CONFIG.worldW-30); y=CONFIG.worldH-30; }
+    else if (side===2){ x=30; y=rnd(30, CONFIG.worldH-30); }
+    else { x=CONFIG.worldW-30; y=rnd(30, CONFIG.worldH-30); }
+
+    aliens.push({
+      x,y,
       vx:0, vy:0,
-      r: CONFIG.playerRadius,
-      score:0,
-      controls: CONTROL_SETS[i],
-      invertUntil:0,
-      lastMeow: -9999,
-      alive:true,
+      r: CONFIG.alienR,
+      dir: rnd(0, Math.PI*2),
+      patrolTurn: rnd(0.01,0.06),
+      state:'patrol',
+      targetId:null,
+      lastSeenAt:-99999,
+      wobble:rnd(0,Math.PI*2),
 
-      isBeingMeowed: false,
-      meowEffectUntil: 0,
-      speedBoost: 1.0,
-      hasShield: false,
-      superMeow: false,
-      treatMagnet: false,
-      activePowerUps: [],
-      beingEaten: false,
-      eatenUntil: 0,
-      respawnPoint: { x: 0, y: 0 },
-    };
-
-    p.imgElement = createCatImage(p);
-    players.push(p);
-  }
-  updateScoreUI();
-}
-
-function spawnTreat(){
-  treats.push({
-    id: Math.random().toString(36).substring(2, 15),
-    x: rnd(CONFIG.boundsPadding, W-CONFIG.boundsPadding),
-    y: rnd(CONFIG.boundsPadding+40, H-CONFIG.boundsPadding),
-    r: CONFIG.treatRadius,
-    emoji:'🐟',
-    vx: 0, vy: 0
-  });
-}
-function spawnRoombas(){
-  roombas.length = 0;
-  for (let i=0;i<CONFIG.roombas;i++){
-    roombas.push({
-      x: rnd(60, W-60),
-      y: rnd(80, H-60),
-      r: 18,
-      vx: rnd(-1.4,1.4),
-      vy: rnd(-1.4,1.4),
-      emoji:'🧹',
+      // abduction beam
+      beaming: 0,
     });
   }
-  if (!roombaSound && roombas.length > 0) { roombaSound = true; SoundManager.loop('roomba'); }
-}
 
-function spawnDoge(){
-  const side = Math.random() < 0.5 ? 'L' : 'R';
-  doge = {
-    x: side==='L' ? -60 : W+60,
-    y: rnd(90, H-90),
-    r: 26,
-    vx: side==='L' ? rnd(2.0,2.5) : rnd(-2.5,-2.0),
-    vy: 0,
-    emoji:'🐶',
-    ttl: 15000,
-    target: null,
-    eating: null,
-    eatingStartTime: 0
-  };
-  SoundManager.play('doge');
-}
-
-function spawnLasers(){
-  lasers.length = 0;
-  for (let i = 0; i < CONFIG.laserCount; i++) {
-    lasers.push({
-      id: Math.random().toString(36).substring(2, 15),
-      x: rnd(40, W-40),
-      y: rnd(90, H-40),
-      r: 10,
-      emoji: '🔴',
-      t: Math.floor(rnd(0, 120)),
-      targetX: rnd(40, W-40),
-      targetY: rnd(90, H-40),
-      speed: rnd(2.8, 4.2)
-    });
-  }
-}
-
-function spawnTornado() {
-  tornado = {
-    x: rnd(W * 0.25, W * 0.75),
-    y: rnd(H * 0.25, H * 0.75),
-    r: 50,
-    vx: rnd(-2, 2),
-    vy: rnd(-2, 2),
-    pullForce: 0.4,
-    rotationSpeed: 0.1,
-    angle: 0,
-    particles: []
-  };
-  for (let i = 0; i < 30; i++) {
-    tornado.particles.push({
-      x: tornado.x + rnd(-tornado.r, tornado.r),
-      y: tornado.y + rnd(-tornado.r, tornado.r),
-      size: rnd(4, 10),
-      angle: rnd(0, Math.PI * 2),
-      distance: rnd(5, tornado.r),
-      speed: rnd(0.05, 0.15)
-    });
-  }
-}
-
-function spawnPowerUp() {
-  const type = POWERUPS[Math.floor(Math.random() * POWERUPS.length)];
-  powerUps.push({
-    x: rnd(CONFIG.boundsPadding * 2, W - CONFIG.boundsPadding * 2),
-    y: rnd(CONFIG.boundsPadding * 2 + 40, H - CONFIG.boundsPadding * 2),
-    r: 15,
-    type,
-    emoji: type.emoji,
-    collectTime: 0,
-    collectPlayer: null,
-    pulsePhase: 0
-  });
-}
-
-function createMeowParticles(x, y, color, count = CONFIG.meowParticles) {
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = rnd(2, 6);
-    meowParticles.push({
-      x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      r: rnd(3, 8),
-      color,
-      life: rnd(30, 80),
-      opacity: 1
-    });
-  }
-}
-function createExplosion(x, y, color, count = 30) {
-  for (let i = 0; i < count; i++) {
-    const angle = Math.random() * Math.PI * 2;
-    const speed = rnd(3, 8);
-    meowParticles.push({
-      x, y,
-      vx: Math.cos(angle) * speed,
-      vy: Math.sin(angle) * speed,
-      r: rnd(4, 10),
-      color,
-      life: rnd(40, 100),
-      opacity: 1
-    });
-  }
-}
-
-function respawnPlayer(player) {
-  player.beingEaten = false;
-  player.x = player.respawnPoint.x;
-  player.y = player.respawnPoint.y;
-  player.vx = 0;
-  player.vy = 0;
-  player.alive = true;
-  if (player.imgElement) player.imgElement.classList.remove('eating');
-  createExplosion(player.x, player.y, player.color, 20);
-}
-
-// ======== GAME LOOP ========
-let running = false;
-let last = performance.now();
-let acc = 0;
-const dt = 1000/60;
-let nextTreatAt = 0;
-let nextDogeAt = 0;
-let paused = false;
-let winner = null;
-
-function updateStatus(s){ document.getElementById('status').textContent = s; }
-function updateScoreUI(){
-  const el = document.getElementById('scores');
-  el.innerHTML = '';
-  players.forEach(p=>{
-    const span = document.createElement('span');
-    span.className = `pchip ${p.chip}`;
-    span.textContent = `${p.emoji} ${p.name}: ${p.score}`;
-    el.appendChild(span);
-  });
-  document.getElementById('targetPts').textContent = CONFIG.targetScore;
-}
-function updatePowerUpsUI() {
-  const el = document.getElementById('powerups');
-  el.innerHTML = '';
-  players.forEach(p => {
-    p.activePowerUps.forEach(pu => {
-      const div = document.createElement('div');
-      div.className = 'powerup';
-      div.innerHTML = `
-        <span class="powerup-icon" style="color:${pu.type.color}">${pu.type.emoji}</span>
-        <span>${pu.type.name}: ${p.name}</span>
-        <span>${Math.max(0, Math.ceil((pu.endTime - performance.now())/1000))}s</span>
-      `;
-      el.appendChild(div);
-    });
-  });
-}
-function updateChaosTimer() {
-  document.getElementById('timer').textContent = `Chaos in: ${Math.max(0, secretSauceCountdown)}s`;
-}
-
-function start(){
-  if (running) return;
-  document.getElementById('center').style.display='none';
-  document.getElementById('timer').style.display = 'block';
-  running = true;
-  resetGame();
-  last = performance.now();
-  requestAnimationFrame(loop);
-}
-
-function resetGame(){
-  if (!window.soundInitialized) {
-    SoundManager.init();
-    window.soundInitialized = true;
+  function spawnAliens(n){
+    for (let i=0;i<n;i++) spawnAlien();
   }
 
-  spawnPlayers(CONFIG.maxPlayers);
-  treats.length=0;
-  roombas.length=0;
-  meowBursts.length=0;
-  meowParticles.length=0;
-  powerUps.length=0;
-  doge = null;
-  tornado = null;
-  currentWeather = null;
-
-  if (CONFIG.laserActive) spawnLasers();
-  spawnRoombas();
-  for(let i=0;i<CONFIG.treatsOnField;i++) spawnTreat();
-
-  nextTreatAt = performance.now() + CONFIG.treatRespawnMs;
-  nextDogeAt = performance.now() + CONFIG.dogeEveryMs;
-  nextWeatherEvent = performance.now() + 5000;
-  nextSecretSauce = performance.now() + CONFIG.secretSauceInterval;
-  secretSauceActive = false;
-  secretSauceCountdown = Math.ceil(CONFIG.secretSauceInterval/1000);
-
-  document.getElementById('warning').style.display = 'none';
-  document.getElementById('nightMode').style.display = 'none';
-
-  winner = null;
-  paused = false;
-
-  updateStatus('Collect fish. First to ' + CONFIG.targetScore + '!');
-  updateChaosTimer();
-
-  victoryContainer.style.display = 'none';
-  victoryContainer.innerHTML = '';
-  SoundManager.stopAll();
-
-  if (roombas.length > 0) { roombaSound = true; SoundManager.loop('roomba'); }
-}
-
-window.addEventListener('keydown', (e)=>{
-  if (e.key.toLowerCase()==='p'){ paused = !paused; updateStatus(paused?'Paused':''); }
-  if (e.key.toLowerCase()==='r'){ resetGame(); }
-});
-document.getElementById('startBtn').addEventListener('click', start);
-
-function handleInput(p){
-  if (p.beingEaten) return;
-
-  const now = performance.now();
-  let up = keys.has(p.controls.up) || keys.has(p.controls.up.toUpperCase());
-  let down = keys.has(p.controls.down) || keys.has(p.controls.down.toUpperCase());
-  let left = keys.has(p.controls.left) || keys.has(p.controls.left.toUpperCase());
-  let right = keys.has(p.controls.right) || keys.has(p.controls.right.toUpperCase());
-
-  if (now < p.invertUntil){ [up,down,left,right] = [down,up,right,left]; }
-
-  const speed = CONFIG.playerSpeed * p.speedBoost;
-  if (up) p.vy -= speed*0.6;
-  if (down) p.vy += speed*0.6;
-  if (left) p.vx -= speed*0.6;
-  if (right) p.vx += speed*0.6;
-
-  if (keys.has(p.controls.meow) && now - p.lastMeow > CONFIG.meowCooldownMs){
-    p.lastMeow = now;
-
-    const range = p.superMeow ? CONFIG.meowKnockRange * 1.5 : CONFIG.meowKnockRange;
-    const force = p.superMeow ? CONFIG.meowKnockForce * 1.5 : CONFIG.meowKnockForce;
-
-    meowBursts.push({
-      x: p.x, y: p.y, r: 10, maxR: range,
-      born: now, life: p.superMeow ? 420 : 320,
-      owner: p, superMeow: p.superMeow
-    });
-
-    createMeowParticles(p.x, p.y, p.color, p.superMeow ? CONFIG.meowParticles * 2 : CONFIG.meowParticles);
-    SoundManager.play(p.superMeow ? 'superMeow' : 'meow', { overlap: true });
-
-    for (const other of players){
-      if (other === p) continue;
-      if (other.hasShield) continue;
-      if (other.beingEaten) continue;
-
-      const dx = other.x - p.x, dy = other.y - p.y;
-      const d = Math.hypot(dx,dy);
-      if (d > 0 && d <= range){
-        const nx = dx/d, ny = dy/d;
-        const adjustedForce = force * (1 - d/range + 0.2);
-        other.vx += nx * adjustedForce;
-        other.vy += ny * adjustedForce;
-
-        other.isBeingMeowed = true;
-        other.meowEffectUntil = now + 800;
-
-        createMeowParticles(other.x, other.y, other.color);
-      }
-    }
-
-    if (p.superMeow) {
-      for (const t of treats) {
-        const dx = t.x - p.x, dy = t.y - p.y;
-        const d = Math.hypot(dx,dy);
-        if (d > 0 && d <= range) {
-          const nx = dx/d, ny = dy/d;
-          const adjustedForce = force * 0.3 * (1 - d/range + 0.2);
-          t.vx = nx * adjustedForce;
-          t.vy = ny * adjustedForce;
-        }
-      }
-      for (const r of roombas) {
-        const dx = r.x - p.x, dy = r.y - p.y;
-        const d = Math.hypot(dx,dy);
-        if (d > 0 && d <= range) {
-          const nx = dx/d, ny = dy/d;
-          const adjustedForce = force * 0.4 * (1 - d/range + 0.2);
-          r.vx += nx * adjustedForce;
-          r.vy += ny * adjustedForce;
-        }
-      }
-    }
-
-    updateStatus(`${p.name} used ${p.superMeow ? 'SUPER ' : ''}MEOW POWER!`);
-  }
-}
-
-function updatePlayer(p){
-  const now = performance.now();
-
-  if (p.beingEaten && now > p.eatenUntil) respawnPlayer(p);
-  if (p.beingEaten) return;
-
-  if (p.isBeingMeowed && now > p.meowEffectUntil) p.isBeingMeowed = false;
-
-  for (let i = p.activePowerUps.length - 1; i >= 0; i--) {
-    const pu = p.activePowerUps[i];
-    if (now > pu.endTime) {
-      if (pu.cleanup) pu.cleanup();
-      p.activePowerUps.splice(i, 1);
-    }
-  }
-
-  p.vx *= CONFIG.friction;
-  p.vy *= CONFIG.friction;
-  p.x += p.vx;
-  p.y += p.vy;
-  edgeBounce(p, p.r);
-
-  if (p.treatMagnet) {
-    for (const t of treats) {
-      const dx = p.x - t.x;
-      const dy = p.y - t.y;
-      const d = Math.hypot(dx, dy);
-      if (d > 0.001 && d < 150) {
-        const force = 0.8 * (1 - d/150);
-        t.vx += (dx/d) * force;
-        t.vy += (dy/d) * force;
-      }
-    }
-  }
-}
-
-function updateTreats(){
-  for (const t of treats) {
-    if (t.vx !== 0 || t.vy !== 0) {
-      t.x += t.vx;
-      t.y += t.vy;
-      t.vx *= 0.95;
-      t.vy *= 0.95;
-      if (Math.abs(t.vx) < 0.1) t.vx = 0;
-      if (Math.abs(t.vy) < 0.1) t.vy = 0;
-
-      if (t.x < CONFIG.boundsPadding) { t.x = CONFIG.boundsPadding; t.vx *= -0.5; }
-      if (t.x > W - CONFIG.boundsPadding) { t.x = W - CONFIG.boundsPadding; t.vx *= -0.5; }
-      if (t.y < CONFIG.boundsPadding + 40) { t.y = CONFIG.boundsPadding + 40; t.vy *= -0.5; }
-      if (t.y > H - CONFIG.boundsPadding) { t.y = H - CONFIG.boundsPadding; t.vy *= -0.5; }
-    }
-  }
-
-  for (let i=treats.length-1;i>=0;i--){
-    const t = treats[i];
+  // ====== HUD ======
+  function renderHUD(){
+    ui.hud.innerHTML='';
+    const now = performance.now();
     for (const p of players){
-      if (p.beingEaten) continue;
-      if (circleCollide(p.x,p.y,p.r, t.x,t.y,t.r)){
-        p.score++;
-        updateScoreUI();
-        treats.splice(i,1);
-        SoundManager.play('treat', { overlap: true });
-        createMeowParticles(t.x, t.y, "#5dffea");
-        if (p.score >= CONFIG.targetScore && !winner) endGameWithWinner(p);
-        break;
-      }
+      const span = document.createElement('span');
+      span.className = `chip ${p.skin.chip}`;
+      const amok = now < p.amokUntil ? " AMOK" : "";
+      const dead = p.dead ? " (OUT)" : "";
+      span.textContent = `${p.skin.emoji} ${p.skin.name}: ${p.livesLeft}❤ • stealth ${Math.round(p.stealth*100)}%${amok}${dead}`;
+      ui.hud.appendChild(span);
     }
   }
 
-  const now = performance.now();
-  if (now >= nextTreatAt){
-    nextTreatAt = now + CONFIG.treatRespawnMs;
-    if (treats.length < CONFIG.treatsOnField) spawnTreat();
-  }
-}
+  // ====== STEALTH METER UPDATE ======
+  function updateStealth(p){
+    const now = performance.now();
+    const dx = p.x - p.lastX;
+    const dy = p.y - p.lastY;
+    const moved = Math.hypot(dx,dy);
+    p.lastX = p.x; p.lastY = p.y;
 
-function endGameWithWinner(p) {
-  winner = p;
-  paused = true;
-  updateStatus(`🎉 ${p.emoji} ${p.name} WINS! Press R to restart.`);
-  showVictoryAnimation(p);
-}
+    const inCover = playerInCover(p);
+    const moving = moved > 0.45;
 
-function updateRoombas(){
-  for (const r of roombas){
-    r.x += r.vx; r.y += r.vy;
-    if (r.x < 40 || r.x > W-40) r.vx *= -1;
-    if (r.y < 70 || r.y > H-40) r.vy *= -1;
-
-    for (const p of players){
-      if (p.beingEaten) continue;
-      if (circleCollide(p.x,p.y,p.r, r.x,r.y,r.r)){
-        const dx = p.x - r.x, dy = p.y - r.y;
-        const d = Math.hypot(dx,dy)||1;
-        const nx = dx/d, ny = dy/d;
-        p.vx += nx*1.8; p.vy += ny*1.8;
-        if (Math.random() < 0.3) createMeowParticles(p.x - (nx*p.r), p.y - (ny*p.r), "#aaaaaa");
-      }
+    const sec = CONFIG.dt / 1000; // will be set per tick; we use fixed dt in loop
+    // gain only if in cover AND not moving
+    if (inCover && !moving && !p.abducting){
+      p.stealth = clamp(p.stealth + CONFIG.stealthGainPerSec * sec, 0, 1);
+    } else {
+      // lose stealth when moving (or out of cover)
+      const lose = (moving ? CONFIG.stealthLoseMovePerSec : 0.04) * sec;
+      p.stealth = clamp(p.stealth - lose, 0, 1);
     }
   }
 
-  if (roombas.length > 0 && !roombaSound) { roombaSound = true; SoundManager.loop('roomba'); }
-  else if (roombas.length === 0 && roombaSound) { roombaSound = false; SoundManager.stop('roomba'); }
-}
+  // ====== INPUT / PLAYER ======
+  function handleInput(p){
+    if (p.dead) return;
+    const now = performance.now();
+    if (p.abducting) return; // locked during abduction
 
-function updateDoge(){
-  const now = performance.now();
-  if (!doge && now >= nextDogeAt){ nextDogeAt = now + CONFIG.dogeEveryMs; spawnDoge(); }
+    let up = keys.has(p.controls.up) || keys.has(p.controls.up.toUpperCase());
+    let down = keys.has(p.controls.down) || keys.has(p.controls.down.toUpperCase());
+    let left = keys.has(p.controls.left) || keys.has(p.controls.left.toUpperCase());
+    let right = keys.has(p.controls.right) || keys.has(p.controls.right.toUpperCase());
 
-  if (!doge) return;
+    let speed = CONFIG.playerBaseSpeed;
 
-  if (doge.eating) {
-    const eatingDuration = now - doge.eatingStartTime;
-    if (eatingDuration >= CONFIG.dogeEatTimeMs) doge.eating = null;
-  } else {
-    let closestDist = Infinity;
-    let closestPlayer = null;
-    for (const p of players) {
-      if (p.beingEaten) continue;
-      const d = dist(doge, p);
-      if (d < closestDist) { closestDist = d; closestPlayer = p; }
+    if (keys.has(p.controls.dash) && now > p.dashCdUntil){
+      p.dashUntil = now + CONFIG.dashMs;
+      p.dashCdUntil = now + CONFIG.dashCooldownMs;
+      p.stealth = clamp(p.stealth - CONFIG.stealthLoseDash, 0, 1); // sprint ruins stealth
     }
+    if (now < p.dashUntil) speed += CONFIG.dashBoost;
+    if (now < p.amokUntil) speed *= 1.12;
 
-    if (closestPlayer) {
-      const dx = closestPlayer.x - doge.x;
-      const dy = closestPlayer.y - doge.y;
-      const d = Math.hypot(dx, dy) || 1;
-      doge.vx = (dx/d) * CONFIG.dogeSpeed;
-      doge.vy = (dy/d) * CONFIG.dogeSpeed;
-      if (secretSauceActive) { doge.vx *= 1.5; doge.vy *= 1.5; }
-
-      for (const p of players) {
-        if (p.beingEaten) continue;
-        if (circleCollide(p.x, p.y, p.r, doge.x, doge.y, doge.r)) {
-          doge.eating = p;
-          doge.eatingStartTime = now;
-
-          p.beingEaten = true;
-          p.eatenUntil = now + CONFIG.dogeEatTimeMs;
-          p.respawnPoint = { x: rnd(100, W-100), y: rnd(100, H-100) };
-
-          createExplosion(p.x, p.y, "#ff6600", 25);
-
-          if (secretSauceActive && p.score > 0) {
-            const lostTreats = Math.min(p.score, 3);
-            p.score -= lostTreats;
-            updateScoreUI();
-            for (let i = 0; i < lostTreats; i++) {
-              treats.push({
-                id: Math.random().toString(36).slice(2),
-                x: doge.x + rnd(-40, 40),
-                y: doge.y + rnd(-40, 40),
-                r: CONFIG.treatRadius,
-                emoji:'🐟',
-                vx: rnd(-2, 2),
-                vy: rnd(-2, 2)
-              });
-            }
-          }
-
-          updateStatus(`${p.name} was eaten by Doge!`);
-          SoundManager.play('doge');
-          break;
-        }
-      }
-    }
+    if (up) p.vy -= speed*0.62;
+    if (down) p.vy += speed*0.62;
+    if (left) p.vx -= speed*0.62;
+    if (right) p.vx += speed*0.62;
   }
 
-  if (!doge.eating) { doge.x += doge.vx; doge.y += doge.vy; }
+  function confinePlayer(p, r){
+    p.x = clamp(p.x, r, CONFIG.worldW - r);
+    p.y = clamp(p.y, r, CONFIG.worldH - r);
+  }
 
-  doge.ttl -= 16;
-  if (doge.ttl <= 0 || doge.x < -80 || doge.x > W+80 || doge.y < -80 || doge.y > H+80) doge = null;
-}
+  function updatePlayer(p){
+    const now = performance.now();
+    if (p.dead) return;
 
-function updateLasers(){
-  for (let i = 0; i < lasers.length; i++) {
-    const laser = lasers[i];
-    laser.t += 1;
-    if (laser.t % 120 === 0){
-      laser.targetX = rnd(40, W-40);
-      laser.targetY = rnd(90, H-40);
+    // abduction pull
+    if (p.abducting){
+      p.abductLift += CONFIG.abductPullPerTick;
+      // keep in world, but float upward visually (render uses abductLift)
+      p.vx *= 0.8; p.vy *= 0.8;
+      return;
     }
 
-    const dx = laser.targetX - laser.x;
-    const dy = laser.targetY - laser.y;
-    const d = Math.hypot(dx,dy)||1;
-    laser.x += (dx/d) * laser.speed;
-    laser.y += (dy/d) * laser.speed;
-
-    for (const p of players){
-      if (p.beingEaten) continue;
-      if (circleCollide(p.x,p.y,p.r, laser.x,laser.y, laser.r+6)){
-        if (!p.hasShield) {
-          p.invertUntil = performance.now() + CONFIG.laserInvertMs;
-          updateStatus(`${p.name} is distracted by the LASER!`);
-          createMeowParticles(laser.x, laser.y, "#ff3333");
-          SoundManager.play('laser');
-        }
-      }
-    }
-  }
-}
-
-function updateMeowBursts(){
-  const now = performance.now();
-  for (let i=meowBursts.length-1;i>=0;i--){
-    const b = meowBursts[i];
-    const life = (now - b.born);
-    b.r = b.maxR * Math.min(1, life / b.life);
-    if (life > b.life) meowBursts.splice(i,1);
-  }
-}
-
-function updateParticles() {
-  for (let i = meowParticles.length - 1; i >= 0; i--) {
-    const p = meowParticles[i];
+    p.vx *= CONFIG.playerFriction;
+    p.vy *= CONFIG.playerFriction;
     p.x += p.vx;
-    p.vy += 0.1;
     p.y += p.vy;
-    p.vx *= 0.95;
-    p.vy *= 0.95;
-    p.life -= 1;
-    p.opacity = Math.max(0, p.life / 80);
-    if (p.life <= 0) meowParticles.splice(i, 1);
-  }
-}
 
-function updateTornado() {
-  if (!tornado) return;
+    const baseR = CONFIG.playerR;
+    const r = now < p.amokUntil ? baseR*CONFIG.amokSizeMul : baseR;
+    confinePlayer(p, r);
 
-  tornado.x += tornado.vx;
-  tornado.y += tornado.vy;
-  tornado.angle += tornado.rotationSpeed;
-
-  if (tornado.x < tornado.r || tornado.x > W - tornado.r) tornado.vx *= -1;
-  if (tornado.y < tornado.r || tornado.y > H - tornado.r) tornado.vy *= -1;
-
-  for (const p of players) {
-    if (p.beingEaten) continue;
-    const dx = tornado.x - p.x;
-    const dy = tornado.y - p.y;
-    const d = Math.hypot(dx, dy);
-    if (d > 0.001 && d < tornado.r * 2) {
-      const pullFactor = (1 - d / (tornado.r * 2)) * tornado.pullForce;
-      p.vx += (dx/d) * pullFactor;
-      p.vy += (dy/d) * pullFactor;
-
-      const angle = Math.atan2(dy, dx);
-      const perpX = -Math.sin(angle);
-      const perpY = Math.cos(angle);
-      p.vx += perpX * pullFactor * 0.8;
-      p.vy += perpY * pullFactor * 0.8;
-
-      if (Math.random() < 0.1) createMeowParticles(p.x, p.y, "#bbbbbb");
+    // question box -> AMOK
+    if (questionBox && circleHit(p.x,p.y,r, questionBox.x,questionBox.y, questionBox.r)){
+      p.amokUntil = now + CONFIG.amokMs;
+      spawnQuestionBox();
+      setStatus(`💥 ${p.skin.name} found the ? box. AMOK time.`);
+      renderHUD();
     }
+
+    updateStealth(p);
   }
 
-  for (const part of tornado.particles) {
-    part.angle += part.speed;
-    part.x = tornado.x + Math.cos(part.angle) * part.distance;
-    part.y = tornado.y + Math.sin(part.angle) * part.distance;
-  }
+  // ====== AMOK ======
+  function applyAmok(){
+    const now = performance.now();
+    for (const eater of players){
+      if (eater.dead) continue;
+      if (now >= eater.amokUntil) continue;
 
-  for (const t of treats) {
-    const dx = tornado.x - t.x;
-    const dy = tornado.y - t.y;
-    const d = Math.hypot(dx, dy);
-    if (d > 0.001 && d < tornado.r * 2) {
-      const pullFactor = (1 - d / (tornado.r * 2)) * tornado.pullForce * 0.8;
-      t.vx += (dx/d) * pullFactor;
-      t.vy += (dy/d) * pullFactor;
+      const r = CONFIG.playerR * CONFIG.amokSizeMul;
+      const eatR = r * CONFIG.amokEatMul;
 
-      const angle = Math.atan2(dy, dx);
-      const perpX = -Math.sin(angle);
-      const perpY = Math.cos(angle);
-      t.vx += perpX * pullFactor * 0.8;
-      t.vy += perpY * pullFactor * 0.8;
-    }
-  }
-}
+      // eat aliens
+      for (let i=aliens.length-1;i>=0;i--){
+        const a = aliens[i];
+        if (circleHit(eater.x,eater.y,eatR, a.x,a.y,a.r)){
+          aliens.splice(i,1);
+          if (Math.random()<0.25) setStatus(`👹 ${eater.skin.name} ate an alien.`);
+        }
+      }
 
-function updatePowerUps() {
-  const now = performance.now();
-
-  for (let i = powerUps.length - 1; i >= 0; i--) {
-    const p = powerUps[i];
-    p.pulsePhase = (p.pulsePhase + 0.05) % (Math.PI * 2);
-
-    for (const player of players) {
-      if (player.beingEaten) continue;
-      if (circleCollide(player.x, player.y, player.r, p.x, p.y, p.r)) {
-        const endTime = now + p.type.duration;
-        const puId = now.toString() + Math.random().toString().slice(2, 6);
-        const cleanup = p.type.effect(player);
-
-        player.activePowerUps.push({ id: puId, type: p.type, endTime, cleanup });
-        createExplosion(p.x, p.y, p.type.color);
-        powerUps.splice(i, 1);
-        updateStatus(`${player.name} got ${p.type.name}!`);
-        break;
+      // eat other player
+      for (const victim of players){
+        if (victim===eater) continue;
+        if (victim.dead) continue;
+        const vr = CONFIG.playerR * (now < victim.amokUntil ? CONFIG.amokSizeMul : 1);
+        if (circleHit(eater.x,eater.y,eatR, victim.x,victim.y,vr)){
+          catchPlayer(victim, {byPlayer:true});
+        }
       }
     }
   }
 
-  if (Math.random() < CONFIG.powerUpChance && powerUps.length < 3) spawnPowerUp();
-}
+  // ====== ALIENS ======
+  function alienCanSee(a, p){
+    if (p.dead) return false;
+    const now = performance.now();
 
-function updateWeather() {
-  const now = performance.now();
-  if (currentWeather && now >= currentWeather.endTime) {
-    currentWeather.event.onEnd();
-    currentWeather = null;
+    // stealth reduces view distance dramatically
+    const stealthFactor = 1 - (p.stealth * 0.65); // 1..0.35
+    const amokBonus = (now < p.amokUntil) ? 1.18 : 1.0;
+    const view = CONFIG.alienBaseView * stealthFactor * amokBonus;
+
+    const pr = CONFIG.playerR * ((now < p.amokUntil) ? CONFIG.amokSizeMul : 1);
+    const dx = p.x-a.x, dy=p.y-a.y;
+    const d = Math.hypot(dx,dy);
+    if (d > view + pr*0.2) return false;
+
+    const ndx = dx/(d||1), ndy = dy/(d||1);
+    const fx = Math.cos(a.dir), fy = Math.sin(a.dir);
+    const dot = ndx*fx + ndy*fy;
+    if (dot < CONFIG.alienBaseFovCos) return false;
+
+    if (blockedLOS(a.x,a.y, p.x,p.y)) return false;
+
+    return true;
   }
-  if (CONFIG.weatherEvents && !currentWeather && now >= nextWeatherEvent) {
-    const randomEvent = WEATHER_EVENTS[Math.floor(Math.random() * WEATHER_EVENTS.length)];
-    currentWeather = { event: randomEvent, endTime: now + CONFIG.weatherDuration };
-    randomEvent.onStart();
-    nextWeatherEvent = now + CONFIG.weatherDuration + CONFIG.weatherCooldown;
-  }
-}
 
-function updateSecretSauce() {
-  const now = performance.now();
+  function updateAlien(a){
+    const now = performance.now();
+    a.wobble += 0.08;
+    a.beaming *= 0.88;
 
-  if (!secretSauceActive) {
-    const secondsLeft = Math.ceil((nextSecretSauce - now) / 1000);
-    if (secretSauceCountdown !== secondsLeft) {
-      secretSauceCountdown = secondsLeft;
-      updateChaosTimer();
+    // choose visible target
+    let best=null, bestD=Infinity;
+    for (const p of players){
+      if (alienCanSee(a,p)){
+        const d = Math.hypot(p.x-a.x, p.y-a.y);
+        if (d < bestD){ bestD=d; best=p; }
+      }
     }
-  }
 
-  if (secretSauceActive && now >= nextSecretSauce + CONFIG.secretSauceDuration) {
-    secretSauceActive = false;
-    document.getElementById('warning').style.display = 'none';
-    updateStatus('');
-    nextSecretSauce = now + CONFIG.secretSauceInterval;
-    SoundManager.stop('chaos');
-  }
-
-  if (!secretSauceActive && now >= nextSecretSauce) {
-    secretSauceActive = true;
-    document.getElementById('warning').style.display = 'block';
-    updateStatus('⚠️ CHAOS MODE ACTIVATED! ⚠️');
-    document.getElementById('timer').textContent = 'CHAOS MODE!';
-    SoundManager.play('chaos');
-    for (let i = 0; i < 3; i++) spawnPowerUp();
-    if (Math.random() < 0.5) spawnDoge();
-    for (let i = 0; i < 3; i++) spawnTreat();
-  }
-}
-
-function loop(t){
-  requestAnimationFrame(loop);
-  if (!running) return;
-
-  const now = t;
-  let delta = now - last;
-  last = now;
-  if (delta > 100) delta = 100;
-  acc += delta;
-
-  updatePowerUpsUI();
-  updateCatImagePositions();
-
-  while (acc >= dt){
-    if (!paused && !winner){
-      for (const p of players){ handleInput(p); updatePlayer(p); }
-      updateTreats();
-      updateRoombas();
-      updateDoge();
-      if (CONFIG.laserActive) updateLasers();
-      updateMeowBursts();
-      updateParticles();
-      updatePowerUps();
-      updateTornado();
-      updateWeather();
-      updateSecretSauce();
+    if (best){
+      if (a.state !== 'chase') {
+        // jumpscare when spotted (feature 1)
+        doJumpscare();
+        setStatus(`👽 SCREAM! ${best.skin.name} is spotted.`);
+      }
+      a.state='chase';
+      a.targetId=best.id;
+      a.lastSeenAt=now;
+    } else if (a.state==='chase' && (now-a.lastSeenAt) > CONFIG.alienLoseSightMs){
+      a.state='patrol';
+      a.targetId=null;
     }
-    acc -= dt;
-  }
-  render();
-}
 
-// ======== RENDER ========
-function renderBG(){
-  ctx.fillStyle = '#10131a';
-  ctx.fillRect(0,0,W,H);
-  ctx.save();
-  ctx.globalAlpha = 0.12;
-  for (let x=0; x<W; x+=40){ ctx.fillStyle = '#ffffff'; ctx.fillRect(x, 0, 1, H); }
-  for (let y=0; y<H; y+=40){ ctx.fillStyle = '#ffffff'; ctx.fillRect(0, y, W, 1); }
-  ctx.restore();
-  ctx.fillStyle = 'rgba(0,0,0,.25)';
-  ctx.fillRect(0,0,W,50);
-}
-function drawCircle(x,y,r, fill, stroke){
-  ctx.beginPath();
-  ctx.arc(x,y,r,0,Math.PI*2);
-  if (fill){ ctx.fillStyle = fill; ctx.fill(); }
-  if (stroke){ ctx.lineWidth = 2; ctx.strokeStyle = stroke; ctx.stroke(); }
-}
-
-function render(){
-  renderBG();
-
-  for (const t of treats){
-    drawCircle(t.x,t.y,t.r+4,'#1b2a2a',null);
-    ctx.font = '18px system-ui';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('🐟', t.x, t.y);
-  }
-
-  if (tornado) {
-    for (const p of tornado.particles) {
-      ctx.fillStyle = 'rgba(200, 200, 200, 0.6)';
-      ctx.beginPath();
-      ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.font = '32px system-ui';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('🌪️', tornado.x, tornado.y);
-  }
-
-  for (const p of powerUps) {
-    const pulseSize = Math.sin(p.pulsePhase) * 4;
-
-    ctx.save();
-    const gradient = ctx.createRadialGradient(p.x, p.y, p.r-5, p.x, p.y, p.r+10+pulseSize);
-    gradient.addColorStop(0, p.type.color + '60');
-    gradient.addColorStop(1, 'transparent');
-    ctx.fillStyle = gradient;
-    ctx.beginPath();
-    ctx.arc(p.x, p.y, p.r+10+pulseSize, 0, Math.PI*2);
-    ctx.fill();
-    ctx.restore();
-
-    drawCircle(p.x, p.y, p.r+pulseSize, '#2b2f3a', p.type.color);
-    ctx.font = '16px system-ui';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(p.emoji, p.x, p.y);
-  }
-
-  for (const r of roombas){
-    drawCircle(r.x,r.y,r.r,'#2b2f3a','#3a4152');
-    ctx.font = '16px system-ui';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText(r.emoji, r.x, r.y);
-  }
-
-  if (doge){
-    if (secretSauceActive) {
-      ctx.save(); ctx.globalAlpha = 0.3;
-      drawCircle(doge.x, doge.y, doge.r+8, '#ff5500', null);
-      ctx.restore();
-    }
-    if (doge.eating) {
-      drawCircle(doge.x, doge.y, doge.r + 5, '#3a2f2b', '#5a423a');
-      ctx.save();
-      ctx.globalAlpha = 0.6;
-      ctx.fillStyle = '#ff0000';
-      ctx.beginPath();
-      ctx.arc(doge.x, doge.y, doge.r - 5, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-      ctx.font = '25px system-ui';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('🐺', doge.x, doge.y);
+    // movement
+    if (a.state==='chase' && a.targetId!=null){
+      const p = players[a.targetId];
+      if (p && !p.dead){
+        const dx=p.x-a.x, dy=p.y-a.y;
+        const d=Math.hypot(dx,dy)||1;
+        a.vx = (dx/d)*CONFIG.alienChaseSpeed;
+        a.vy = (dy/d)*CONFIG.alienChaseSpeed;
+        a.dir = Math.atan2(a.vy, a.vx);
+      }
     } else {
-      drawCircle(doge.x, doge.y, doge.r, '#3a2f2b', '#5a423a');
-      ctx.font = '20px system-ui';
-      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-      ctx.fillText('🐶', doge.x, doge.y);
+      a.dir += (Math.sin(a.wobble)*0.02) + (Math.random()<0.03 ? rnd(-a.patrolTurn, a.patrolTurn) : 0);
+      a.vx = Math.cos(a.dir)*CONFIG.alienPatrolSpeed;
+      a.vy = Math.sin(a.dir)*CONFIG.alienPatrolSpeed;
+    }
+
+    a.x += a.vx;
+    a.y += a.vy;
+
+    // bounds bounce
+    if (a.x < a.r || a.x > CONFIG.worldW-a.r){ a.dir = Math.PI - a.dir; a.x = clamp(a.x, a.r, CONFIG.worldW-a.r); }
+    if (a.y < a.r || a.y > CONFIG.worldH-a.r){ a.dir = -a.dir; a.y = clamp(a.y, a.r, CONFIG.worldH-a.r); }
+
+    // obstacle push-out
+    for (const o of obstacles){
+      const d = Math.hypot(a.x-o.x, a.y-o.y);
+      const min = a.r + o.r*0.82;
+      if (d>0 && d<min){
+        const nx=(a.x-o.x)/d, ny=(a.y-o.y)/d;
+        a.x = o.x + nx*min;
+        a.y = o.y + ny*min;
+        a.dir += rnd(-0.65, 0.65);
+      }
+    }
+
+    // attempt abduction / contact
+    for (const p of players){
+      if (p.dead) continue;
+      if (now < p.invulnUntil) continue;
+      if (p.abducting) continue;
+
+      const pr = CONFIG.playerR * ((now < p.amokUntil) ? CONFIG.amokSizeMul : 1);
+
+      if (circleHit(a.x,a.y,a.r, p.x,p.y, pr)){
+        if (now < p.amokUntil){
+          // AMOK eats alien
+          const idx = aliens.indexOf(a);
+          if (idx>=0) aliens.splice(idx,1);
+          setStatus(`👹 ${p.skin.name} ate an alien (contact).`);
+          return;
+        } else {
+          // start abduction (feature 3)
+          startAbduction(p, a);
+          return;
+        }
+      }
     }
   }
 
-  for (const laser of lasers) {
-    drawCircle(laser.x, laser.y, laser.r, '#e53935', '#ffffff');
-    ctx.font = '12px system-ui';
-    ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-    ctx.fillText('🔴', laser.x, laser.y);
+  // ====== ABDUCTION ======
+  function startAbduction(p, alien){
+    const now = performance.now();
+    p.abducting = true;
+    p.abductByAlien = alien;
+    p.abductStartAt = now;
+    p.abductLift = 0;
+
+    alien.beaming = 1;
+
+    doJumpscare();
+    setStatus(`🛸 ${p.skin.name} is being abducted! Bump them to interrupt!`);
   }
 
-  for (const b of meowBursts){
-    ctx.save();
-    const gradient = ctx.createRadialGradient(b.x, b.y, 1, b.x, b.y, b.r);
-    if (b.superMeow) {
-      gradient.addColorStop(0, (b.owner ? b.owner.color : '#ffffff') + '60');
-      gradient.addColorStop(0.6, (b.owner ? b.owner.color : '#ffffff') + '20');
-      gradient.addColorStop(1, 'transparent');
-    } else {
-      gradient.addColorStop(0, (b.owner ? b.owner.color : '#ffffff') + '40');
-      gradient.addColorStop(1, 'transparent');
+  function updateAbductions(){
+    const now = performance.now();
+    for (const p of players){
+      if (!p.abducting) continue;
+
+      const a = p.abductByAlien;
+      if (a) a.beaming = 1;
+
+      // interrupt if teammate bumps (feature 3)
+      for (const helper of players){
+        if (helper === p) continue;
+        if (helper.dead) continue;
+
+        const hr = CONFIG.playerR * ((now < helper.amokUntil) ? CONFIG.amokSizeMul : 1);
+        if (circleHit(helper.x, helper.y, hr, p.x, p.y, CONFIG.abductInterruptRadius)){
+          p.abducting = false;
+          p.abductByAlien = null;
+          p.abductLift = 0;
+          p.invulnUntil = now + 700;
+          setStatus(`✅ Abduction interrupted! Nice bump.`);
+          return;
+        }
+      }
+
+      // finish abduction
+      if (now - p.abductStartAt >= CONFIG.abductLockMs){
+        p.abducting = false;
+        p.abductByAlien = null;
+        p.abductLift = 0;
+        p.invulnUntil = now + CONFIG.abductInvulnMs;
+        catchPlayer(p, {byAlien:true});
+      }
     }
-    ctx.fillStyle = gradient;
-    ctx.globalAlpha = b.superMeow ? 0.4 : 0.3;
-    ctx.beginPath();
-    ctx.arc(b.x, b.y, b.r, 0, Math.PI*2);
-    ctx.fill();
-
-    ctx.globalAlpha = 0.18;
-    drawCircle(b.x, b.y, b.r, null, '#ffffff');
-    ctx.restore();
   }
 
-  for (const p of meowParticles) {
-    ctx.save();
-    ctx.globalAlpha = p.opacity;
-    drawCircle(p.x, p.y, p.r, p.color, null);
-    ctx.restore();
+  // ====== CATCH / LIVES ======
+  function catchPlayer(p, meta){
+    const now = performance.now();
+    p.livesLeft -= 1;
+    flashFound();
+
+    setStatus(meta?.byPlayer
+      ? `😼 ${p.skin.name} got eaten by AMOK cat. (-1)`
+      : `👽 ${p.skin.name} got abducted. (-1)`);
+
+    if (p.livesLeft <= 0){
+      p.dead = true;
+      setStatus(`💀 ${p.skin.name} is OUT!`);
+    }
+
+    // respawn / reposition
+    p.x = rnd(120, CONFIG.worldW-120);
+    p.y = rnd(120, CONFIG.worldH-120);
+    p.vx = p.vy = 0;
+
+    renderHUD();
+
+    const alive = players.filter(pp => !pp.dead);
+    if (alive.length <= 1){
+      game.paused = true;
+      const winner = alive[0];
+      setStatus(winner ? `🏆 ${winner.skin.name} survives. Press R.` : `No survivors. Press R.`);
+    }
   }
 
-  if (winner){
-    ctx.save();
-    ctx.fillStyle = 'rgba(0,0,0,.45)';
+  // ====== RESET / START ======
+  function resetGame(){
+    game.paused = false;
+    setStatus("Hide smart. Stand still in cover to build stealth.");
+    spawnObstacles();
+    spawnQuestionBox();
+    spawnPlayers();
+
+    aliens.length=0;
+    spawnAliens(CONFIG.alienBase);
+
+    updateCams();
+    updateCatImgs();
+    renderHUD();
+
+    ui.timer.textContent = "Stealth up: stand still in bushes";
+  }
+
+  function start(){
+    if (game.running) return;
+    game.running = true;
+    ui.startScreen.style.display = 'none';
+    resetGame();
+    game.last = performance.now();
+    requestAnimationFrame(loop);
+  }
+
+  ui.startBtn.addEventListener('click', start);
+
+  addEventListener('keydown', (e)=>{
+    if (e.key.toLowerCase()==='p'){ game.paused = !game.paused; setStatus(game.paused ? "Paused" : ""); }
+    if (e.key.toLowerCase()==='r'){ resetGame(); }
+  });
+
+  // ====== RENDER ======
+  function renderBG(){
+    const g = ctx.createLinearGradient(0,0,0,H);
+    g.addColorStop(0, '#04060a');
+    g.addColorStop(1, '#071119');
+    ctx.fillStyle = g;
     ctx.fillRect(0,0,W,H);
-    ctx.fillStyle = '#ffffff';
-    ctx.font = 'bold 42px system-ui';
-    ctx.textAlign = 'center';
-    ctx.fillText(`🎉 ${winner.emoji} ${winner.name} WINS!`, W/2, H/2 - 30);
-    ctx.font = 'bold 36px system-ui';
-    ctx.fillText(`Winner Winner Fish Dinner!`, W/2, H/2 + 20);
-    ctx.font = '18px system-ui';
-    ctx.fillText('Press R to restart', W/2, H/2 + 60);
+
+    // divider shadow area
+    ctx.fillStyle = 'rgba(0,0,0,.35)';
+    ctx.fillRect(0,0,W,CONFIG.topHudH);
+  }
+
+  function drawWorld(viewId){
+    const cam = cams[viewId];
+    ctx.save();
+
+    // clip to viewport
+    ctx.beginPath();
+    ctx.rect(cam.x, cam.y, cam.w, cam.h);
+    ctx.clip();
+
+    // translate so world renders into that viewport
+    ctx.translate(cam.x - cam.wx, cam.y - cam.wy);
+
+    // world grid
+    ctx.save();
+    ctx.globalAlpha = 0.07;
+    ctx.strokeStyle = '#ffffff';
+    for (let x=0; x<=CONFIG.worldW; x+=120){
+      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CONFIG.worldH); ctx.stroke();
+    }
+    for (let y=0; y<=CONFIG.worldH; y+=120){
+      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CONFIG.worldW,y); ctx.stroke();
+    }
+    ctx.restore();
+
+    // obstacles
+    for (const o of obstacles){
+      o.sway += 0.02;
+
+      // shadow
+      ctx.save();
+      ctx.globalAlpha = 0.25;
+      ctx.fillStyle = '#000';
+      ctx.beginPath();
+      ctx.ellipse(o.x+5, o.y+7, o.r*1.02, o.r*0.78, 0, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      if (o.kind==='bush'){
+        const wig = Math.sin(o.sway)*2.4;
+        ctx.fillStyle = '#114f2b';
+        ctx.beginPath();
+        ctx.ellipse(o.x, o.y, o.r+wig, o.r*0.84, 0, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(140,255,210,.08)';
+        ctx.beginPath();
+        ctx.ellipse(o.x-o.r*0.25, o.y-o.r*0.2, o.r*0.35, o.r*0.25, 0, 0, Math.PI*2);
+        ctx.fill();
+      } else {
+        ctx.fillStyle = '#3e261a';
+        ctx.fillRect(o.x-6, o.y+o.r*0.18, 12, o.r*0.86);
+        const wig = Math.sin(o.sway)*2.0;
+        ctx.fillStyle = '#1d7a3a';
+        ctx.beginPath();
+        ctx.arc(o.x, o.y, o.r+wig, 0, Math.PI*2);
+        ctx.fill();
+        ctx.fillStyle = 'rgba(255,255,255,.06)';
+        ctx.beginPath();
+        ctx.arc(o.x-o.r*0.25, o.y-o.r*0.25, o.r*0.35, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+
+    // question box
+    if (questionBox){
+      questionBox.bob += 0.06;
+      const bobY = Math.sin(questionBox.bob)*4;
+      const x = questionBox.x;
+      const y = questionBox.y + bobY;
+
+      // glow
+      ctx.save();
+      const rg = ctx.createRadialGradient(x,y, 6, x,y, 42);
+      rg.addColorStop(0, 'rgba(255,210,110,.55)');
+      rg.addColorStop(1, 'rgba(255,210,110,0)');
+      ctx.fillStyle = rg;
+      ctx.beginPath();
+      ctx.arc(x,y, 42, 0, Math.PI*2);
+      ctx.fill();
+      ctx.restore();
+
+      // box
+      ctx.fillStyle = '#f3c550';
+      ctx.strokeStyle = '#241b07';
+      ctx.lineWidth = 3;
+      ctx.beginPath();
+      roundRect(ctx, x-16, y-16, 32, 32, 7);
+      ctx.fill(); ctx.stroke();
+      ctx.fillStyle = '#241b07';
+      ctx.font = '900 18px system-ui';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('?', x, y+1);
+    }
+
+    // aliens
+    for (const a of aliens){
+      // view cone
+      ctx.save();
+      ctx.globalAlpha = 0.06;
+      ctx.fillStyle = a.state==='chase' ? 'rgba(255,80,170,.9)' : 'rgba(80,255,210,.9)';
+      ctx.beginPath();
+      ctx.moveTo(a.x,a.y);
+      ctx.arc(a.x,a.y, CONFIG.alienBaseView*0.43, a.dir-0.65, a.dir+0.65);
+      ctx.closePath();
+      ctx.fill();
+      ctx.restore();
+
+      // beaming
+      if (a.beaming > 0.05){
+        ctx.save();
+        ctx.globalAlpha = 0.20 + 0.35*a.beaming;
+        ctx.fillStyle = 'rgba(150,255,220,.8)';
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(a.x-22, a.y+70);
+        ctx.lineTo(a.x+22, a.y+70);
+        ctx.closePath();
+        ctx.fill();
+        ctx.restore();
+      }
+
+      const pulse = Math.sin(a.wobble)*1.6;
+      ctx.fillStyle = a.state==='chase' ? '#ff4fb8' : '#52ffd2';
+      ctx.beginPath();
+      ctx.ellipse(a.x, a.y, a.r+2, a.r+7+pulse, 0, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.fillStyle = '#05070a';
+      ctx.beginPath();
+      ctx.ellipse(a.x-5, a.y-3, 4, 6, 0, 0, Math.PI*2);
+      ctx.ellipse(a.x+5, a.y-3, 4, 6, 0, 0, Math.PI*2);
+      ctx.fill();
+
+      ctx.strokeStyle = '#05070a';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(a.x, a.y+6, 6, 0, Math.PI);
+      ctx.stroke();
+    }
+
+    // abducted player lift indicator (ghost circle)
+    for (const p of players){
+      if (!p.abducting) continue;
+      ctx.save();
+      ctx.globalAlpha = 0.22;
+      ctx.strokeStyle = 'rgba(150,255,220,.9)';
+      ctx.lineWidth = 2;
+      ctx.beginPath();
+      ctx.arc(p.x, p.y - p.abductLift, 26, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+
     ctx.restore();
   }
-}
 
-// Preload images
-(function preload(){
-  CAT_GIFS.forEach(url => { const img = new Image(); img.src = url; });
-  VICTORY_GIFS.forEach(url => { const img = new Image(); img.src = url; });
-})();
+  function roundRect(ctx,x,y,w,h,r){
+    r = Math.min(r, w/2, h/2);
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
+  }
+
+  function render(){
+    renderBG();
+    updateCams();
+    drawWorld(0);
+    drawWorld(1);
+  }
+
+  // ====== MAIN LOOP ======
+  function tick(){
+    for (const p of players){ handleInput(p); updatePlayer(p); }
+    applyAmok();
+    for (let i=aliens.length-1;i>=0;i--) updateAlien(aliens[i]);
+    updateAbductions();
+    updateCams();
+    updateCatImgs();
+    renderHUD();
+  }
+
+  function loop(t){
+    requestAnimationFrame(loop);
+    if (!game.running) return;
+    if (game.paused) { render(); updateCams(); updateCatImgs(); return; }
+
+    let delta = t - game.last;
+    game.last = t;
+    if (delta > 120) delta = 120;
+    game.acc += delta;
+
+    while (game.acc >= game.dt){
+      tick();
+      game.acc -= game.dt;
+    }
+    render();
+  }
+
+  // preload gifs
+  CAT_GIFS.forEach(url => { const img=new Image(); img.src=url; });
+
 })();
 </script>
 </body>
