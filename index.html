@@ -1,0 +1,693 @@
+object-fit: cover;
+border-radius: 50%;
+}
+
+  /* Sound controls */
+  .sound-control {
+    position: fixed;
+    top: 10px;
+    left: 10px;
+    background: rgba(255,255,255,0.1);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+    z-index: 100;
+    font-size: 20px;
+    pointer-events: auto;
+    transition: background-color 0.3s;
+  }
+  
+  .sound-control:hover {
+    background: rgba(255,255,255,0.2);
+  }
+
+  /* Victory Animation */
+  @keyframes flyAcross {
+    0% { transform: translate(-100%, -50%); }
+    100% { transform: translate(100vw, -50%); }
+  }
+
+  .victory-animation {
+    position: fixed;
+    top: 50%;
+    left: 0;
+    width: 200px;
+    height: 100px;
+    z-index: 20;
+    animation: flyAcross 3s linear;
+    pointer-events: none;
+  }
+
+  /* Confetti for victory */
+  .confetti {
+    position: fixed;
+    width: 10px;
+    height: 10px;
+    z-index: 19;
+    pointer-events: none;
+    animation: confetti-fall linear forwards;
+  }
+
+  @keyframes confetti-fall {
+    0% { transform: translateY(-10px) rotate(0deg); opacity: 1; }
+    100% { transform: translateY(100vh) rotate(720deg); opacity: 0; }
+  }
+
+  /* Crown for winner */
+  .crown {
+    position: absolute;
+    top: -25px;
+    left: 50%;
+    transform: translateX(-50%);
+    font-size: 24px;
+    z-index: 21;
+    filter: drop-shadow(0 0 5px gold);
+  }
+
+  /* Volume slider popup */
+  .volume-popup {
+    position: fixed;
+    top: 55px;
+    left: 10px;
+    background: rgba(40,40,50,0.9);
+    padding: 10px;
+    border-radius: 10px;
+    z-index: 101;
+    display: none;
+    width: 150px;
+  }
+
+  .volume-slider {
+    width: 100%;
+    cursor: pointer;
+  }
+
+  .volume-label {
+    display: block;
+    text-align: center;
+    margin-bottom: 5px;
+    font-size: 14px;
+  }
+</style>
+</head>
+<body>
+@@ -83,9 +174,30 @@
+<div id="nightMode" class="night-mode" style="display:none;"></div>
+<div id="warning" class="warning" style="display:none;"></div>
+
+<!-- Sound control button -->
+<div class="sound-control" id="soundToggle">🔊</div>
+<div class="volume-popup" id="volumePopup">
+  <span class="volume-label">Volume: 100%</span>
+  <input type="range" class="volume-slider" id="volumeSlider" min="0" max="100" value="100">
+</div>
+
+<!-- Cat images container (will be dynamically populated) -->
+<div id="catImagesContainer" style="position:absolute; top:0; left:0; pointer-events:none;"></div>
+
+<!-- Audio elements -->
+<audio id="meowSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADFgC1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAAAxZAr2jRAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
+<audio id="superMeowSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAGPgC1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAAAAAAAAAAABj7DyBnPAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
+<audio id="rumbaSoundLoop" preload="auto" loop src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADwAC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAaAAAAAAAAAA8AwnKQGAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
+<audio id="dogeSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADwAC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAXuAAAAAAAAA8AkyY0gAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
+<audio id="treatSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADwAC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAWYAAAAAAAAA8AtZdOBAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
+<audio id="laserSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAADwAC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAYzAAAAAAAAA8CNTwkBAAAAAAAAAAAAAAAAAAAAAP/7kGQAAAAAAGkAAAAIAAANIAAAAQAAAaQAAAAgAAA0gAAABExBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//uQZAAA/wAAf4AAAAgAAA/wAAABAAAB/gAAACAAAD/AAAAETEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVU="></audio>
+<audio id="tornadoSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAEHgC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAX5AAAAAAAABCWG4TOOAAAAAAAAAAAAAAAAAAAAAAAA"></audio>
+<audio id="chaosSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAD8AC6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6urq6//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAWDAAAAAAAAA/DQoxTCAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA=="></audio>
+<audio id="winSound" preload="auto" src="data:audio/mp3;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjU4Ljc2LjEwMAAAAAAAAAAAAAAA//tQAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAWGluZwAAAA8AAAACAAAGPgC1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1tbW1//////////////////////////////////////////////////////////////////8AAAAATGF2YzU4LjEzAAAAAAAAAAAAAAAAJAY1AAAAAAAABJ7YpM3kAAAAAAAAAAAAAAAAAAAAAA=="></audio>
+
+<!-- Victory animation container -->
+<div id="victoryContainer" style="display:none; position:fixed; inset:0; z-index:15; pointer-events:none;"></div>
+
+<script>
+(() => {
+// ======== CONFIG ========
+@@ -116,6 +228,145 @@
+weatherCooldown: 5000, // Time between weather events (reduced to 5 seconds)
+secretSauceInterval: 30000, // Chaos mode every 30 seconds
+secretSauceDuration: 8000, // How long chaos mode lasts (8 seconds)
+    soundEnabled: true, // Sound effects on by default
+    masterVolume: 1.0, // Master volume (0.0 to 1.0)
+  };
+
+  // ======== SOUND MANAGER ========
+  const SoundManager = {
+    sounds: {
+      meow: document.getElementById('meowSound'),
+      superMeow: document.getElementById('superMeowSound'),
+      roomba: document.getElementById('rumbaSoundLoop'),
+      doge: document.getElementById('dogeSound'),
+      treat: document.getElementById('treatSound'),
+      laser: document.getElementById('laserSound'),
+      tornado: document.getElementById('tornadoSound'),
+      chaos: document.getElementById('chaosSound'),
+      win: document.getElementById('winSound')
+    },
+
+    init() {
+      // Set up sound toggle
+      const soundToggle = document.getElementById('soundToggle');
+      const volumePopup = document.getElementById('volumePopup');
+      const volumeSlider = document.getElementById('volumeSlider');
+      const volumeLabel = document.querySelector('.volume-label');
+
+      // Toggle sound on/off
+      soundToggle.addEventListener('click', () => {
+        CONFIG.soundEnabled = !CONFIG.soundEnabled;
+        soundToggle.textContent = CONFIG.soundEnabled ? '🔊' : '🔇';
+        
+        if (CONFIG.soundEnabled) {
+          // Show volume popup when enabling sound
+          volumePopup.style.display = 'block';
+          setTimeout(() => {
+            volumePopup.style.display = 'none';
+          }, 5000); // Hide after 5 seconds
+        } else {
+          // Stop all sounds when muting
+          this.stopAll();
+          volumePopup.style.display = 'none';
+        }
+      });
+
+      // Long press to show volume slider
+      let pressTimer;
+      soundToggle.addEventListener('mousedown', () => {
+        pressTimer = setTimeout(() => {
+          volumePopup.style.display = volumePopup.style.display === 'block' ? 'none' : 'block';
+        }, 500);
+      });
+      soundToggle.addEventListener('mouseup', () => {
+        clearTimeout(pressTimer);
+      });
+      soundToggle.addEventListener('mouseleave', () => {
+        clearTimeout(pressTimer);
+      });
+
+      // Volume control
+      volumeSlider.addEventListener('input', () => {
+        const volume = volumeSlider.value / 100;
+        CONFIG.masterVolume = volume;
+        volumeLabel.textContent = `Volume: ${volumeSlider.value}%`;
+        
+        // Update all sound volumes
+        Object.values(this.sounds).forEach(sound => {
+          sound.volume = volume;
+        });
+      });
+
+      // Click outside to close volume popup
+      document.addEventListener('click', (e) => {
+        if (e.target !== volumePopup && e.target !== soundToggle && !volumePopup.contains(e.target)) {
+          volumePopup.style.display = 'none';
+        }
+      });
+
+      // Set initial volume for all sounds
+      Object.values(this.sounds).forEach(sound => {
+        sound.volume = CONFIG.masterVolume;
+      });
+    },
+
+    play(soundName, options = {}) {
+      if (!CONFIG.soundEnabled) return;
+      
+      const sound = this.sounds[soundName];
+      if (!sound) return;
+      
+      // If the sound is already playing, create a new audio element for overlapping sounds
+      if (!options.overlap && !sound.paused && sound.currentTime > 0) {
+        return;
+      }
+      
+      if (options.overlap) {
+        // Create a temporary clone for overlapping sounds
+        const tempSound = sound.cloneNode();
+        tempSound.volume = CONFIG.masterVolume;
+        tempSound.play();
+        // Remove after playing to avoid memory leaks
+        tempSound.onended = () => tempSound.remove();
+      } else {
+        // Normal playback
+        sound.currentTime = 0;
+        sound.play();
+      }
+    },
+    
+    loop(soundName) {
+      if (!CONFIG.soundEnabled) return;
+      
+      const sound = this.sounds[soundName];
+      if (!sound) return;
+      
+      sound.loop = true;
+      sound.play();
+    },
+    
+    stop(soundName) {
+      const sound = this.sounds[soundName];
+      if (!sound) return;
+      
+      sound.pause();
+      sound.currentTime = 0;
+    },
+    
+    stopAll() {
+      Object.values(this.sounds).forEach(sound => {
+        sound.pause();
+        sound.currentTime = 0;
+      });
+    },
+    
+    adjustVolume(value) {
+      CONFIG.masterVolume = Math.max(0, Math.min(1, value));
+      
+      Object.values(this.sounds).forEach(sound => {
+        sound.volume = CONFIG.masterVolume;
+      });
+    }
+};
+
+// Cat GIFs for the players
+@@ -135,6 +386,15 @@
+{ name:"Shrek", emoji:"👹", chip:"p5", color:"#c4a2ff", gifIndex: 4 },
+];
+
+  // Victory GIFs based on player type
+  const VICTORY_GIFS = [
+    "https://media.tenor.com/eAKuQI-yYD0AAAAi/gato-cat.gif", // Grumpy
+    "https://media.tenor.com/4-5UsuINt9EAAAAi/rainbow-cat-rainbow.gif", // Nyan
+    "https://media.tenor.com/AUicYpBbFF8AAAAi/piano-cat.gif", // Keyboard
+    "https://media.tenor.com/Sv8-f_Fla2cAAAAi/bongo-cat-drum.gif", // Bongo
+    "https://media.tenor.com/JZtOQKh_UmUAAAAi/shrek-cat.gif", // Shrek
+  ];
+  
+// Power-up types
+const POWERUPS = [
+{ name: "Speed Boost", emoji: "⚡", color: "#ffff00", duration: 5000, effect: (player) => {
+@@ -184,9 +444,11 @@
+{ name: "Tornado", onStart: () => {
+spawnTornado();
+updateStatus("🌪️ Tornado Alert - Run for cover!");
+        SoundManager.loop('tornado');
+}, onEnd: () => {
+tornado = null;
+updateStatus("");
+        SoundManager.stop('tornado');
+}
+},
+{ name: "Super Speed", onStart: () => {
+@@ -203,6 +465,7 @@
+const canvas = document.getElementById('game');
+const ctx = canvas.getContext('2d');
+const catImagesContainer = document.getElementById('catImagesContainer');
+  const victoryContainer = document.getElementById('victoryContainer');
+let W = 0, H = 0;
+const DPR = Math.max(1, Math.min(2, window.devicePixelRatio || 1));
+function resize() {
+@@ -221,7 +484,11 @@
+
+// ======== INPUT ========
+const keys = new Set();
+  window.addEventListener('keydown', (e) => { keys.add(e.key); if (e.key === 'Enter') start(); if ([' '].includes(e.key)) e.preventDefault(); });
+  window.addEventListener('keydown', (e) => { 
+    keys.add(e.key); 
+    if (e.key === 'Enter') start(); 
+    if ([' '].includes(e.key)) e.preventDefault(); 
+  });
+window.addEventListener('keyup', (e) => keys.delete(e.key));
+
+// ======== UTIL ========
+@@ -241,16 +508,17 @@
+const treats = [];
+const roombas = [];
+const meowBursts = [];
+  const meowParticles = []; // Particles array
+  const powerUps = []; // Power-ups array
+  const meowParticles = [];
+  const powerUps = [];
+let doge = null;
+  const lasers = []; // Array of lasers
+  const lasers = [];
+let tornado = null;
+let currentWeather = null;
+let nextWeatherEvent = 0;
+let nextSecretSauce = 0;
+let secretSauceActive = false;
+let secretSauceCountdown = 30;
+  let roombaSound = false; // Track if roomba sound is playing
+
+// Player controls map
+const CONTROL_SETS = [
+@@ -261,6 +529,77 @@
+{ up:'8', down:'5', left:'4', right:'6', meow:'0' },
+];
+
+  // Create confetti for victory animation
+  function createConfetti() {
+    const colors = ['#ff9aa2', '#9ad1ff', '#b5ff9a', '#ffdf9a', '#c4a2ff'];
+    const confettiCount = 100;
+    
+    for (let i = 0; i < confettiCount; i++) {
+      const confetti = document.createElement('div');
+      confetti.className = 'confetti';
+      confetti.style.left = `${rnd(0, 100)}%`;
+      confetti.style.width = `${rnd(5, 15)}px`;
+      confetti.style.height = `${rnd(5, 15)}px`;
+      confetti.style.background = colors[Math.floor(Math.random() * colors.length)];
+      confetti.style.opacity = rnd(0.7, 1);
+      confetti.style.animationDuration = `${rnd(2, 5)}s`;
+      
+      victoryContainer.appendChild(confetti);
+    }
+    
+    // Remove confetti after animation is done
+    setTimeout(() => {
+      while (victoryContainer.firstChild) {
+        victoryContainer.removeChild(victoryContainer.firstChild);
+      }
+    }, 5000);
+  }
+
+  // Show victory animation
+  function showVictoryAnimation(player) {
+    victoryContainer.innerHTML = '';
+    victoryContainer.style.display = 'block';
+    
+    // Create confetti
+    createConfetti();
+    
+    // Get the corresponding victory GIF based on player skin
+    const gifIndex = player.skin.gifIndex;
+    const victoryGif = document.createElement('img');
+    victoryGif.className = 'victory-animation';
+    victoryGif.src = VICTORY_GIFS[gifIndex];
+    
+    // Add crown to player
+    const crown = document.createElement('div');
+    crown.className = 'crown';
+    crown.textContent = '👑';
+    if (player.imgElement) {
+      player.imgElement.appendChild(crown);
+    }
+    
+    // Add player name to animation
+    const nameTag = document.createElement('div');
+    nameTag.style.position = 'absolute';
+    nameTag.style.bottom = '-25px';
+    nameTag.style.left = '50%';
+    nameTag.style.transform = 'translateX(-50%)';
+    nameTag.style.fontWeight = 'bold';
+    nameTag.style.color = 'white';
+    nameTag.style.textShadow = '0 0 5px black';
+    nameTag.textContent = `${player.name} WINS!`;
+    victoryGif.appendChild(nameTag);
+    
+    victoryContainer.appendChild(victoryGif);
+    
+    // Play victory sound
+    SoundManager.play('win');
+    
+    // Hide after animation is complete
+    setTimeout(() => {
+      victoryContainer.style.display = 'none';
+    }, 5000);
+  }
+
+// Create cat image element for a player
+function createCatImage(player) {
+const img = document.createElement('img');
+@@ -284,7 +623,7 @@
+// Update cat image position
+function updateCatImagePositions() {
+players.forEach(p => {
+      if (p.imgElement) {
+      if (p && p.imgElement) {
+p.imgElement.style.left = `${p.x}px`;
+p.imgElement.style.top = `${p.y}px`;
+
+@@ -332,16 +671,16 @@
+invertUntil:0,
+lastMeow: -9999,
+alive:true,
+        isBeingMeowed: false, // Track if player is under meow effect
+        meowEffectUntil: 0, // Track how long the meow effect lasts
+        speedBoost: 1.0, // Power-up: speed multiplier
+        hasShield: false, // Power-up: shield against meow
+        superMeow: false, // Power-up: super meow power
+        treatMagnet: false, // Power-up: attracts treats
+        activePowerUps: [], // Track active power-ups
+        beingEaten: false, // Track if player is being eaten by doge
+        eatenUntil: 0, // When player will respawn
+        respawnPoint: { x: 0, y: 0 } // Where player will respawn
+        isBeingMeowed: false,
+        meowEffectUntil: 0,
+        speedBoost: 1.0,
+        hasShield: false,
+        superMeow: false,
+        treatMagnet: false,
+        activePowerUps: [],
+        beingEaten: false,
+        eatenUntil: 0,
+        respawnPoint: { x: 0, y: 0 }
+};
+
+// Create cat image element
+@@ -354,6 +693,7 @@
+
+function spawnTreat(){
+const t = { 
+      id: Math.random().toString(36).substring(2, 15),
+x: rnd(CONFIG.boundsPadding, W-CONFIG.boundsPadding),
+y: rnd(CONFIG.boundsPadding+40, H-CONFIG.boundsPadding),
+r: CONFIG.treatRadius, 
+@@ -377,9 +717,15 @@
+r: 18,
+vx: rnd(-1.4,1.4),
+vy: rnd(-1.4,1.4),
+        emoji:'🧹', // broom as a 'roomba' vibe
+        emoji:'🧹',
+});
+}
+    
+    // Start roomba sound if not playing
+    if (!roombaSound && roombas.length > 0) {
+      roombaSound = true;
+      SoundManager.loop('roomba');
+    }
+}
+
+function spawnDoge(){
+@@ -390,26 +736,30 @@
+r: 26,
+vx: side==='L' ? rnd(2.0,2.5) : rnd(-2.5,-2.0),
+vy: 0,
+      emoji:'🐶', // Doge cameo
+      ttl: 15000, // Increased lifespan so it can chase players longer
+      emoji:'🐶',
+      ttl: 15000,
+target: null,
+      eating: null, // Which player is being eaten
+      eatingStartTime: 0 // When eating started
+      eating: null,
+      eatingStartTime: 0
+};
+    
+    // Play doge sound
+    SoundManager.play('doge');
+}
+
+function spawnLasers(){
+lasers.length = 0;
+for (let i = 0; i < CONFIG.laserCount; i++) {
+lasers.push({
+        id: Math.random().toString(36).substring(2, 15),
+x: rnd(40, W-40),
+y: rnd(90, H-40),
+r: 10,
+emoji: '🔴',
+        t: Math.floor(rnd(0, 120)), // Staggered timing
+        t: Math.floor(rnd(0, 120)),
+targetX: rnd(40, W-40),
+targetY: rnd(90, H-40),
+        speed: rnd(2.8, 4.2) // Varied speeds
+        speed: rnd(2.8, 4.2)
+});
+}
+}
+@@ -528,12 +878,18 @@
+}
+
+function resetGame(){
+    // Initialize sound manager
+    if (!window.soundInitialized) {
+      SoundManager.init();
+      window.soundInitialized = true;
+    }
+    
+spawnPlayers(CONFIG.maxPlayers);
+treats.length=0;
+roombas.length=0;
+meowBursts.length=0;
+    meowParticles.length=0; // Clear particles
+    powerUps.length=0; // Clear power-ups
+    meowParticles.length=0;
+    powerUps.length=0;
+doge = null;
+tornado = null;
+currentWeather = null;
+@@ -542,7 +898,7 @@
+for(let i=0;i<CONFIG.treatsOnField;i++) spawnTreat();
+nextTreatAt = performance.now() + CONFIG.treatRespawnMs;
+nextDogeAt = performance.now() + CONFIG.dogeEveryMs;
+    nextWeatherEvent = performance.now() + 5000; // First weather after 5 seconds
+    nextWeatherEvent = performance.now() + 5000;
+nextSecretSauce = performance.now() + CONFIG.secretSauceInterval;
+secretSauceActive = false;
+secretSauceCountdown = 30;
+@@ -553,6 +909,24 @@
+updateStatus('Collect fish. First to ' + CONFIG.targetScore + '!');
+document.getElementById('powerups').innerHTML = '';
+updateChaosTimer();
+    
+    // Clean up victory animation
+    victoryContainer.style.display = 'none';
+    while (victoryContainer.firstChild) {
+      victoryContainer.removeChild(victoryContainer.firstChild);
+    }
+    
+    // Remove any crowns from previous winners
+    document.querySelectorAll('.crown').forEach(crown => crown.remove());
+    
+    // Stop all sounds
+    SoundManager.stopAll();
+    
+    // Start roomba sound
+    if (roombas.length > 0) {
+      roombaSound = true;
+      SoundManager.loop('roomba');
+    }
+}
+
+function updateStatus(s){ document.getElementById('status').textContent = s; }
+@@ -647,6 +1021,9 @@
+// Create visual particles for meow effect
+createMeowParticles(p.x, p.y, p.color, p.superMeow ? CONFIG.meowParticles * 2 : CONFIG.meowParticles);
+
+      // Play meow sound
+      SoundManager.play(p.superMeow ? 'superMeow' : 'meow', { overlap: true });
+      
+// Apply effect immediately to others within range
+for (const other of players){
+if (other === p) continue;
+@@ -788,6 +1165,9 @@
+updateScoreUI();
+treats.splice(i,1);
+
+          // Play treat collection sound
+          SoundManager.play('treat', { overlap: true });
+          
+// Create particle effect when collecting treats
+createMeowParticles(t.x, t.y, "#5dffea");
+
+@@ -811,6 +1191,9 @@
+winner = p;
+paused = true;
+updateStatus(`🎉 ${p.emoji} ${p.name} WINS! Press R to restart.`);
+    
+    // Show victory animation
+    showVictoryAnimation(p);
+}
+
+function updateRoombas(){
+@@ -835,11 +1218,24 @@
+}
+}
+}
+    
+    // Handle roomba sound
+    if (roombas.length > 0 && !roombaSound) {
+      roombaSound = true;
+      SoundManager.loop('roomba');
+    } else if (roombas.length === 0 && roombaSound) {
+      roombaSound = false;
+      SoundManager.stop('roomba');
+    }
+}
+
+function updateDoge(){
+const now = performance.now();
+    if (!doge && now >= nextDogeAt){ nextDogeAt = now + CONFIG.dogeEveryMs; spawnDoge(); }
+    if (!doge && now >= nextDogeAt){ 
+      nextDogeAt = now + CONFIG.dogeEveryMs;
+      spawnDoge(); 
+    }
+    
+if (doge){
+// If doge is eating a player
+if (doge.eating) {
+@@ -924,6 +1320,9 @@
+}
+
+updateStatus(`${p.name} was eaten by Doge!`);
+              
+              // Play doge eating sound
+              SoundManager.play('doge');
+break;
+}
+}
+@@ -972,6 +1371,9 @@
+
+// Particle effect when hit by laser
+createMeowParticles(laser.x, laser.y, "#ff3333");
+            
+            // Play laser hit sound
+            SoundManager.play('laser');
+}
+}
+}
+@@ -1167,6 +1569,9 @@
+
+// Schedule next chaos mode
+nextSecretSauce = now + CONFIG.secretSauceInterval;
+      
+      // Stop chaos sound
+      SoundManager.stop('chaos');
+}
+
+// Start secret sauce mode
+@@ -1176,6 +1581,9 @@
+updateStatus('⚠️ CHAOS MODE ACTIVATED! ⚠️');
+document.getElementById('timer').textContent = 'CHAOS MODE!';
+
+      // Play chaos sound
+      SoundManager.play('chaos');
+      
+// Spawn additional chaos
+for (let i = 0; i < 3; i++) spawnPowerUp();
+if (Math.random() < 0.5) spawnDoge();
+@@ -1251,7 +1659,7 @@
+for (const t of treats){
+drawCircle(t.x,t.y,t.r+4,'#1b2a2a',null);
+ctx.font = '18px system-ui';
+      ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+           ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+ctx.fillText('🐟', t.x, t.y);
+}
+
+@@ -1402,6 +1810,12 @@
+const img = new Image();
+img.src = url;
+});
+    
+    // Also preload victory GIFs
+    VICTORY_GIFS.forEach(url => {
+      const img = new Image();
+      img.src = url;
+    });
+}
+
+// Start preloading images
