@@ -1,1013 +1,262 @@
-<!doctype html>
+<!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8"/>
-<meta name="viewport" content="width=device-width,initial-scale=1"/>
-<title>Meow Mayhem: Alien Ambush — Split Screen</title>
-<style>
-  html,body{margin:0;height:100%;background:#05070a;color:#fff;font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,"Helvetica Neue",Arial;overflow:hidden}
-  canvas{display:block;width:100vw;height:100vh}
+  <meta charset="UTF-8" />
+  <title>Consulting Conversation Simulator</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  #ui{position:fixed;inset:0;pointer-events:none}
-  .top{
-    position:fixed;left:0;right:0;top:0;
-    display:flex;gap:10px;align-items:center;flex-wrap:wrap;
-    padding:10px 12px;
-    background:linear-gradient(to bottom, rgba(0,0,0,.70), rgba(0,0,0,.22));
-    border-bottom:1px solid rgba(255,255,255,.06);
-    backdrop-filter: blur(6px);
-    z-index:100;
-  }
-  .pill{padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.07);font-weight:900;letter-spacing:.2px}
-  .row{display:flex;gap:8px;flex-wrap:wrap}
-  .chip{padding:4px 8px;border-radius:999px;font-weight:1000;font-size:14px}
-  .p1{background:#ff9aa2;color:#2a1a1d}
-  .p2{background:#9ad1ff;color:#121a24}
-  .status{flex:1;opacity:.95;min-width:220px}
-  .bottom{position:fixed;bottom:10px;left:50%;transform:translateX(-50%);opacity:.85;font-size:13px;z-index:100}
+  <style>
+    :root {
+      --bg: #0f172a;
+      --panel: #111827;
+      --card: #1f2933;
+      --accent: #38bdf8;
+      --muted: #94a3b8;
+      --danger: #f87171;
+      --success: #4ade80;
+      --text: #e5e7eb;
+    }
 
-  .center{position:fixed;left:50%;top:50%;transform:translate(-50%,-50%);text-align:center;max-width:760px;padding:0 18px;z-index:100}
-  .btn{display:inline-block;padding:12px 18px;border-radius:12px;background:#1f2330;font-weight:1000;cursor:pointer;pointer-events:auto;box-shadow:0 10px 28px rgba(0,0,0,.55)}
-  .hint{opacity:.82;margin-top:10px;font-size:14px;line-height:1.35}
+    * {
+      box-sizing: border-box;
+      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+    }
 
-  .divider{
-    position:fixed;top:60px;bottom:0;left:50%;
-    width:2px;background:rgba(255,255,255,.08);
-    box-shadow:0 0 18px rgba(120,255,220,.06);
-    z-index:20;pointer-events:none;
-  }
+    body {
+      margin: 0;
+      background: linear-gradient(180deg, #020617, #0f172a);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      justify-content: center;
+      padding: 32px;
+    }
 
-  .scanlines{
-    position:fixed;inset:0;pointer-events:none;z-index:60;
-    background:repeating-linear-gradient(to bottom,
-      rgba(255,255,255,.04) 0px,
-      rgba(255,255,255,.04) 1px,
-      rgba(0,0,0,0) 3px,
-      rgba(0,0,0,0) 6px);
-    mix-blend-mode:overlay;opacity:.22;
-  }
-  .vignette{
-    position:fixed;inset:0;pointer-events:none;z-index:61;
-    background:radial-gradient(circle at 50% 45%, rgba(0,0,0,0) 0%, rgba(0,0,0,.35) 55%, rgba(0,0,0,.78) 100%);
-  }
+    .app {
+      max-width: 900px;
+      width: 100%;
+    }
 
-  .jumpscare{
-    position:fixed;inset:0;pointer-events:none;z-index:80;display:none;
-    background:
-      radial-gradient(circle at 50% 50%, rgba(255,0,80,.12), rgba(0,0,0,0) 55%),
-      repeating-linear-gradient(120deg, rgba(255,90,200,.10) 0px, rgba(255,90,200,.10) 8px, rgba(0,0,0,0) 16px, rgba(0,0,0,0) 28px);
-    mix-blend-mode:screen;
-    animation:jPulse .55s ease-in-out 0s 1;
-  }
-  @keyframes jPulse{
-    0%{opacity:0;filter:blur(0px)}
-    20%{opacity:1;filter:blur(0.4px)}
-    100%{opacity:0;filter:blur(0px)}
-  }
-  .shake{animation:screenShake .24s linear 0s 2;}
-  @keyframes screenShake{
-    0%{transform:translate(0,0)}
-    25%{transform:translate(6px,-5px)}
-    50%{transform:translate(-6px,4px)}
-    75%{transform:translate(5px,6px)}
-    100%{transform:translate(0,0)}
-  }
+    header {
+      margin-bottom: 24px;
+    }
 
-  .foundFlash{
-    position:fixed;inset:0;pointer-events:none;z-index:75;
-    background:rgba(255,40,40,.18);
-    animation:flash 450ms ease-in-out 0s 2;
-    display:none;
-  }
-  @keyframes flash{
-    0%{opacity:0}
-    30%{opacity:1}
-    100%{opacity:0}
-  }
-</style>
+    h1 {
+      font-size: 28px;
+      margin: 0;
+      font-weight: 700;
+    }
+
+    .subtitle {
+      color: var(--muted);
+      margin-top: 6px;
+      font-size: 14px;
+    }
+
+    .card {
+      background: var(--card);
+      border-radius: 12px;
+      padding: 20px;
+      margin-bottom: 20px;
+      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
+    }
+
+    .label {
+      font-size: 12px;
+      text-transform: uppercase;
+      letter-spacing: 0.08em;
+      color: var(--muted);
+      margin-bottom: 8px;
+    }
+
+    .scenario {
+      line-height: 1.6;
+      font-size: 16px;
+    }
+
+    textarea {
+      width: 100%;
+      min-height: 140px;
+      background: #020617;
+      border: 1px solid #1e293b;
+      border-radius: 8px;
+      padding: 14px;
+      color: var(--text);
+      font-size: 15px;
+      resize: vertical;
+    }
+
+    textarea:focus {
+      outline: none;
+      border-color: var(--accent);
+    }
+
+    button {
+      background: var(--accent);
+      color: #020617;
+      border: none;
+      padding: 12px 18px;
+      border-radius: 8px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      transition: transform 0.1s ease, opacity 0.1s ease;
+    }
+
+    button:hover {
+      transform: translateY(-1px);
+      opacity: 0.9;
+    }
+
+    .score {
+      font-size: 32px;
+      font-weight: 700;
+      margin-bottom: 8px;
+    }
+
+    .score.good { color: var(--success); }
+    .score.ok { color: var(--accent); }
+    .score.bad { color: var(--danger); }
+
+    .feedback ul {
+      padding-left: 20px;
+    }
+
+    .feedback li {
+      margin-bottom: 8px;
+    }
+
+    footer {
+      text-align: center;
+      font-size: 12px;
+      color: var(--muted);
+      margin-top: 40px;
+    }
+  </style>
 </head>
+
 <body>
-<canvas id="game"></canvas>
+  <div class="app">
 
-<div id="ui">
-  <div class="top">
-    <div class="pill">👽 Alien Ambush — Split Screen</div>
-    <div class="row" id="hud"></div>
-    <div class="pill" id="timer">Stealth up: stand still in bushes</div>
-    <div class="status" id="status"></div>
-  </div>
+    <header>
+      <h1>Consulting Conversation Simulator</h1>
+      <div class="subtitle">
+        Partner-level objections · Commercial framing · Low-risk positioning
+      </div>
+    </header>
 
-  <div class="center" id="startScreen">
-    <div style="font-size:44px;font-weight:1000;margin-bottom:6px;">Meow Mayhem: Alien Ambush</div>
-    <div style="opacity:.9;margin-bottom:16px;">
-      Split-screen stealth. Hide behind bushes 🌿 & trees 🌳. Avoid 👽. Touch “?” to go AMOK.
+    <div class="card">
+      <div class="label">Situation 9</div>
+      <div class="scenario">
+        You’re speaking to a managing partner of a small advisory firm in Melaka.
+        <br><br>
+        He says:
+        <br><br>
+        <strong>“You’re sharp, but we don’t usually take short-term people. It’s not worth the effort.”</strong>
+      </div>
     </div>
-    <div class="btn" id="startBtn">Press ENTER or Click to Start</div>
-    <div class="hint">
-      P1: WASD + F (dash) • P2: Arrows + / (dash)<br/>
-      <b>Hiding meter</b> increases when standing still in cover. Dashing reduces it.<br/>
-      If abducted, teammate can <b>bump</b> you to interrupt.
+
+    <div class="card">
+      <div class="label">Your Response</div>
+      <textarea id="response" placeholder="Type what you would say next..."></textarea>
+      <br><br>
+      <button onclick="evaluateResponse()">Evaluate Response</button>
     </div>
+
+    <div class="card" id="result" style="display:none;">
+      <div class="label">Assessment</div>
+      <div id="score" class="score"></div>
+      <div class="feedback" id="feedback"></div>
+    </div>
+
+    <footer>
+      MVP build · Static mode (GitHub Pages)
+    </footer>
+
   </div>
-
-  <div class="bottom">Pause: <b>P</b> • Restart: <b>R</b></div>
-</div>
-
-<div class="divider"></div>
-<div class="scanlines"></div>
-<div class="vignette"></div>
-<div class="jumpscare" id="jumpscare"></div>
-<div class="foundFlash" id="foundFlash"></div>
 
 <script>
-(() => {
-  const CONFIG = {
-    players: 2,
-    lives: 3,
+function evaluateResponse() {
+  const text = document.getElementById("response").value.toLowerCase();
+  const result = document.getElementById("result");
+  const scoreEl = document.getElementById("score");
+  const feedbackEl = document.getElementById("feedback");
 
-    worldW: 2200,
-    worldH: 1400,
+  let score = 50;
+  let positives = [];
+  let negatives = [];
 
-    topHudH: 60,
-
-    playerBaseSpeed: 2.5,
-    playerFriction: 0.86,
-    playerR: 22,
-
-    dashBoost: 4.6,
-    dashMs: 260,
-    dashCooldownMs: 1100,
-
-    // stealth meter
-    stealthGainPerSec: 0.22,
-    stealthLoseDash: 0.22,
-    stealthLoseMovePerSec: 0.10,
-
-    alienBaseView: 320,
-    alienBaseFovCos: Math.cos((75 * Math.PI/180)),
-    alienLoseSightMs: 750,
-
-    alienBase: 7,
-    alienR: 18,
-    alienPatrolSpeed: 1.55,
-    alienChaseSpeed: 2.65,
-
-    abductLockMs: 1050,
-    abductPullPerTick: 3.2,
-    abductInterruptRadius: 40,
-    abductInvulnMs: 1300,
-
-    questionR: 18,
-    amokMs: 11000,
-    amokSizeMul: 2.05,
-    amokEatMul: 1.25,
-
-    obstacles: 34,
-    jumpCooldownMs: 2600,
-  };
-
-  // Cat meme links ARE here:
-  const CAT_GIFS = [
-    "https://media.tenor.com/SuVGs-GL7RoAAAAi/shocked-shocked-cat.gif",
-    "https://media.tenor.com/Ym6VeAcZoTcAAAAi/aaaah-cat.gif",
-    "https://media.tenor.com/1Z8PTLFT8HUAAAAi/voices-cat.gif",
-    "https://media.tenor.com/T_avUEk3aWwAAAAi/catgroove7tv-catgroove.gif",
-    "https://media.tenor.com/y-Ew-QGLcpYAAAAi/shrek-cat.gif",
-  ];
-
-  const SKINS = [
-    { name:"Grumpy", chip:"p1", color:"#ff9aa2", gifIndex: 0, emoji:"😾" },
-    { name:"Nyan", chip:"p2", color:"#9ad1ff", gifIndex: 1, emoji:"🌈" },
-  ];
-  const CONTROL_SETS = [
-    { up:'w', down:'s', left:'a', right:'d', dash:'f' },
-    { up:'ArrowUp', down:'ArrowDown', left:'ArrowLeft', right:'ArrowRight', dash:'/' },
-  ];
-
-  // preload as Images (canvas-drawn)
-  const catImgs = CAT_GIFS.map(url => {
-    const img = new Image();
-    img.crossOrigin = "anonymous"; // helps in some cases
-    img.src = url;
-    return img;
-  });
-
-  // INPUT
-  const keys = new Set();
-  addEventListener('keydown', (e) => {
-    keys.add(e.key);
-    if (e.key === 'Enter') start();
-    if (e.key === ' ') e.preventDefault();
-  });
-  addEventListener('keyup', (e) => keys.delete(e.key));
-
-  // CANVAS
-  const canvas = document.getElementById('game');
-  const ctx = canvas.getContext('2d');
-  let W=0,H=0;
-  const DPR = Math.max(1, Math.min(2, window.devicePixelRatio||1));
-  function resize(){
-    W = Math.floor(innerWidth);
-    H = Math.floor(innerHeight);
-    canvas.width = Math.floor(W*DPR);
-    canvas.height = Math.floor(H*DPR);
-    canvas.style.width = W+"px";
-    canvas.style.height = H+"px";
-    ctx.setTransform(DPR,0,0,DPR,0,0);
-    updateViewports();
-  }
-  resize();
-  addEventListener('resize', resize);
-
-  // UI
-  const ui = {
-    hud: document.getElementById('hud'),
-    timer: document.getElementById('timer'),
-    status: document.getElementById('status'),
-    startScreen: document.getElementById('startScreen'),
-    startBtn: document.getElementById('startBtn'),
-    jumpscare: document.getElementById('jumpscare'),
-    foundFlash: document.getElementById('foundFlash'),
-  };
-  function setStatus(s){ ui.status.textContent = s || ""; }
-  function doJumpscare(){
-    const now = performance.now();
-    if (now < game.lastJumpAt + CONFIG.jumpCooldownMs) return;
-    game.lastJumpAt = now;
-
-    ui.jumpscare.style.display = 'block';
-    ui.jumpscare.style.animation = 'none';
-    void ui.jumpscare.offsetHeight;
-    ui.jumpscare.style.animation = '';
-    document.body.classList.add('shake');
-    setTimeout(()=> document.body.classList.remove('shake'), 520);
-    setTimeout(()=> ui.jumpscare.style.display='none', 650);
-  }
-  function flashFound(){
-    ui.foundFlash.style.display = 'block';
-    ui.foundFlash.style.animation = 'none';
-    void ui.foundFlash.offsetHeight;
-    ui.foundFlash.style.animation = '';
-    setTimeout(()=> ui.foundFlash.style.display='none', 900);
+  // Heuristic scoring (mock AI logic)
+  if (text.includes("understand") || text.includes("fair")) {
+    score += 10;
+    positives.push("You validated their position instead of resisting it.");
   }
 
-  // UTIL
-  const rnd = (a,b)=> a + Math.random()*(b-a);
-  const clamp = (v,a,b)=> Math.max(a, Math.min(b, v));
-  function circleHit(ax,ay,ar,bx,by,br){ return Math.hypot(ax-bx, ay-by) <= ar+br; }
-  function segCircle(x1,y1,x2,y2,cx,cy,r){
-    const dx=x2-x1, dy=y2-y1;
-    const l2=dx*dx+dy*dy;
-    if (l2===0) return Math.hypot(cx-x1, cy-y1) <= r;
-    let t=((cx-x1)*dx+(cy-y1)*dy)/l2;
-    t=clamp(t,0,1);
-    const px=x1+t*dx, py=y1+t*dy;
-    return Math.hypot(cx-px, cy-py) <= r;
+  if (text.includes("specific") || text.includes("task") || text.includes("problem")) {
+    score += 15;
+    positives.push("You framed your value around a defined, contained scope.");
   }
 
-  // ENTITIES
-  const players = [];
-  const aliens = [];
-  const obstacles = [];
-  let questionBox = null;
-
-  const cams = [
-    { x:0, y:0, w:0, h:0, wx:0, wy:0 },
-    { x:0, y:0, w:0, h:0, wx:0, wy:0 },
-  ];
-
-  const game = {
-    running:false,
-    paused:false,
-    last: performance.now(),
-    acc: 0,
-    dt: 1000/60,
-    lastJumpAt: -99999,
-  };
-
-  function updateViewports(){
-    const top = CONFIG.topHudH;
-    const vh = H - top;
-    const vw = Math.floor(W/2);
-    cams[0].w = vw; cams[0].h = vh; cams[0].x = 0; cams[0].y = top;
-    cams[1].w = W - vw; cams[1].h = vh; cams[1].x = vw; cams[1].y = top;
-  }
-  updateViewports();
-
-  function clampCam(cx, cy, vw, vh){
-    return {
-      x: clamp(cx, 0, Math.max(0, CONFIG.worldW - vw)),
-      y: clamp(cy, 0, Math.max(0, CONFIG.worldH - vh)),
-    };
+  if (text.includes("risk") || text.includes("low-risk") || text.includes("test")) {
+    score += 10;
+    positives.push("You reduced perceived hiring risk.");
   }
 
-  function updateCams(){
-    updateViewports();
-    for (let i=0;i<players.length;i++){
-      const p = players[i];
-      const vw = cams[i].w, vh = cams[i].h;
-      const cx = p.x - vw/2;
-      const cy = p.y - vh/2;
-      const cl = clampCam(cx, cy, vw, vh);
-      cams[i].wx = cl.x;
-      cams[i].wy = cl.y;
-    }
+  if (text.includes("short-term") && text.includes("value")) {
+    score += 5;
+    positives.push("You positioned short-term as intentional, not temporary.");
   }
 
-  function blockedLOS(ax,ay,bx,by){
-    for (const o of obstacles){
-      if (segCircle(ax,ay,bx,by, o.x,o.y, o.blockR)) return true;
-    }
-    return false;
+  if (text.includes("please") || text.includes("hope")) {
+    score -= 10;
+    negatives.push("Language slightly leans toward permission-seeking.");
   }
 
-  function playerInCover(p){
-    for (const o of obstacles){
-      if (Math.hypot(p.x-o.x, p.y-o.y) <= o.r*0.92) return true;
-    }
-    return false;
+  if (text.length < 120) {
+    score -= 10;
+    negatives.push("Response may be too brief to fully reframe value.");
   }
 
-  function spawnObstacles(){
-    obstacles.length=0;
-    for (let i=0;i<CONFIG.obstacles;i++){
-      const kind = Math.random()<0.55 ? 'bush' : 'tree';
-      const r = kind==='bush' ? rnd(30, 48) : rnd(38, 64);
-      obstacles.push({
-        kind,
-        x: rnd(120, CONFIG.worldW-120),
-        y: rnd(120, CONFIG.worldH-120),
-        r,
-        blockR: r*(kind==='bush'?0.95:1.05),
-        sway: rnd(0, Math.PI*2),
-      });
-    }
+  // Clamp score
+  score = Math.max(0, Math.min(100, score));
+
+  // Score color
+  let scoreClass = "ok";
+  if (score >= 75) scoreClass = "good";
+  if (score < 50) scoreClass = "bad";
+
+  scoreEl.textContent = score + "/100";
+  scoreEl.className = "score " + scoreClass;
+
+  // Feedback HTML
+  let html = "";
+
+  if (positives.length) {
+    html += "<strong>What worked:</strong><ul>";
+    positives.forEach(p => html += `<li>${p}</li>`);
+    html += "</ul>";
   }
 
-  function spawnQuestionBox(){
-    questionBox = { x:rnd(140, CONFIG.worldW-140), y:rnd(140, CONFIG.worldH-140), r:CONFIG.questionR, bob:0 };
+  if (negatives.length) {
+    html += "<strong>What weakened it:</strong><ul>";
+    negatives.forEach(n => html += `<li>${n}</li>`);
+    html += "</ul>";
   }
 
-  function spawnPlayers(){
-    players.length=0;
-    for (let i=0;i<CONFIG.players;i++){
-      const skin = SKINS[i];
-      players.push({
-        id:i,
-        skin,
-        x: i===0 ? 260 : CONFIG.worldW-260,
-        y: CONFIG.worldH/2 + (i===0 ? -70 : 70),
-        vx:0, vy:0,
-
-        livesLeft: CONFIG.lives,
-        dead:false,
-        controls: CONTROL_SETS[i],
-
-        dashUntil:0,
-        dashCdUntil:0,
-
-        stealth: 0.2,
-        lastX: 0,
-        lastY: 0,
-
-        invulnUntil: 0,
-
-        amokUntil: 0,
-
-        abducting: false,
-        abductByAlien: null,
-        abductStartAt: 0,
-        abductLift: 0,
-      });
-    }
-    renderHUD();
-  }
-
-  function spawnAlien(){
-    const side = Math.floor(rnd(0,4));
-    let x,y;
-    if (side===0){ x=rnd(30, CONFIG.worldW-30); y=30; }
-    else if (side===1){ x=rnd(30, CONFIG.worldW-30); y=CONFIG.worldH-30; }
-    else if (side===2){ x=30; y=rnd(30, CONFIG.worldH-30); }
-    else { x=CONFIG.worldW-30; y=rnd(30, CONFIG.worldH-30); }
-
-    aliens.push({
-      x,y,
-      vx:0, vy:0,
-      r: CONFIG.alienR,
-      dir: rnd(0, Math.PI*2),
-      patrolTurn: rnd(0.01,0.06),
-      state:'patrol',
-      targetId:null,
-      lastSeenAt:-99999,
-      wobble:rnd(0,Math.PI*2),
-      beaming: 0,
-    });
-  }
-  function spawnAliens(n){ for (let i=0;i<n;i++) spawnAlien(); }
-
-  function renderHUD(){
-    ui.hud.innerHTML='';
-    const now = performance.now();
-    for (const p of players){
-      const span = document.createElement('span');
-      span.className = `chip ${p.skin.chip}`;
-      const amok = now < p.amokUntil ? " AMOK" : "";
-      const dead = p.dead ? " (OUT)" : "";
-      span.textContent = `${p.skin.emoji} ${p.skin.name}: ${p.livesLeft}❤ • stealth ${Math.round(p.stealth*100)}%${amok}${dead}`;
-      ui.hud.appendChild(span);
-    }
-  }
-
-  function handleInput(p){
-    if (p.dead) return;
-    const now = performance.now();
-    if (p.abducting) return;
-
-    let up = keys.has(p.controls.up) || keys.has(p.controls.up.toUpperCase());
-    let down = keys.has(p.controls.down) || keys.has(p.controls.down.toUpperCase());
-    let left = keys.has(p.controls.left) || keys.has(p.controls.left.toUpperCase());
-    let right = keys.has(p.controls.right) || keys.has(p.controls.right.toUpperCase());
-
-    let speed = CONFIG.playerBaseSpeed;
-
-    if (keys.has(p.controls.dash) && now > p.dashCdUntil){
-      p.dashUntil = now + CONFIG.dashMs;
-      p.dashCdUntil = now + CONFIG.dashCooldownMs;
-      p.stealth = clamp(p.stealth - CONFIG.stealthLoseDash, 0, 1);
-    }
-    if (now < p.dashUntil) speed += CONFIG.dashBoost;
-    if (now < p.amokUntil) speed *= 1.12;
-
-    if (up) p.vy -= speed*0.62;
-    if (down) p.vy += speed*0.62;
-    if (left) p.vx -= speed*0.62;
-    if (right) p.vx += speed*0.62;
-  }
-
-  function confinePlayer(p, r){
-    p.x = clamp(p.x, r, CONFIG.worldW - r);
-    p.y = clamp(p.y, r, CONFIG.worldH - r);
-  }
-
-  function updateStealth(p){
-    const dx = p.x - p.lastX;
-    const dy = p.y - p.lastY;
-    const moved = Math.hypot(dx,dy);
-    p.lastX = p.x; p.lastY = p.y;
-
-    const inCover = playerInCover(p);
-    const moving = moved > 0.45;
-    const sec = game.dt / 1000;
-
-    if (inCover && !moving && !p.abducting){
-      p.stealth = clamp(p.stealth + CONFIG.stealthGainPerSec * sec, 0, 1);
-    } else {
-      const lose = (moving ? CONFIG.stealthLoseMovePerSec : 0.04) * sec;
-      p.stealth = clamp(p.stealth - lose, 0, 1);
-    }
-  }
-
-  function updatePlayer(p){
-    const now = performance.now();
-    if (p.dead) return;
-
-    if (p.abducting){
-      p.abductLift += CONFIG.abductPullPerTick;
-      p.vx *= 0.8; p.vy *= 0.8;
-      return;
-    }
-
-    p.vx *= CONFIG.playerFriction;
-    p.vy *= CONFIG.playerFriction;
-    p.x += p.vx;
-    p.y += p.vy;
-
-    const baseR = CONFIG.playerR;
-    const r = now < p.amokUntil ? baseR*CONFIG.amokSizeMul : baseR;
-    confinePlayer(p, r);
-
-    if (questionBox && circleHit(p.x,p.y,r, questionBox.x,questionBox.y, questionBox.r)){
-      p.amokUntil = now + CONFIG.amokMs;
-      spawnQuestionBox();
-      setStatus(`💥 ${p.skin.name} found the ? box. AMOK time.`);
-      renderHUD();
-    }
-
-    updateStealth(p);
-  }
-
-  function applyAmok(){
-    const now = performance.now();
-    for (const eater of players){
-      if (eater.dead) continue;
-      if (now >= eater.amokUntil) continue;
-
-      const r = CONFIG.playerR * CONFIG.amokSizeMul;
-      const eatR = r * CONFIG.amokEatMul;
-
-      for (let i=aliens.length-1;i>=0;i--){
-        const a = aliens[i];
-        if (circleHit(eater.x,eater.y,eatR, a.x,a.y,a.r)){
-          aliens.splice(i,1);
-          if (Math.random()<0.25) setStatus(`👹 ${eater.skin.name} ate an alien.`);
-        }
-      }
-
-      for (const victim of players){
-        if (victim===eater) continue;
-        if (victim.dead) continue;
-        const vr = CONFIG.playerR * ((now < victim.amokUntil) ? CONFIG.amokSizeMul : 1);
-        if (circleHit(eater.x,eater.y,eatR, victim.x,victim.y,vr)){
-          catchPlayer(victim, {byPlayer:true});
-        }
-      }
-    }
-  }
-
-  function alienCanSee(a, p){
-    if (p.dead) return false;
-    const now = performance.now();
-
-    const stealthFactor = 1 - (p.stealth * 0.65);
-    const amokBonus = (now < p.amokUntil) ? 1.18 : 1.0;
-    const view = CONFIG.alienBaseView * stealthFactor * amokBonus;
-
-    const pr = CONFIG.playerR * ((now < p.amokUntil) ? CONFIG.amokSizeMul : 1);
-    const dx = p.x-a.x, dy=p.y-a.y;
-    const d = Math.hypot(dx,dy);
-    if (d > view + pr*0.2) return false;
-
-    const ndx = dx/(d||1), ndy = dy/(d||1);
-    const fx = Math.cos(a.dir), fy = Math.sin(a.dir);
-    const dot = ndx*fx + ndy*fy;
-    if (dot < CONFIG.alienBaseFovCos) return false;
-
-    if (blockedLOS(a.x,a.y, p.x,p.y)) return false;
-    return true;
-  }
-
-  function updateAlien(a){
-    const now = performance.now();
-    a.wobble += 0.08;
-    a.beaming *= 0.88;
-
-    let best=null, bestD=Infinity;
-    for (const p of players){
-      if (alienCanSee(a,p)){
-        const d = Math.hypot(p.x-a.x, p.y-a.y);
-        if (d < bestD){ bestD=d; best=p; }
-      }
-    }
-
-    if (best){
-      if (a.state !== 'chase') {
-        doJumpscare();
-        setStatus(`👽 SCREAM! ${best.skin.name} is spotted.`);
-      }
-      a.state='chase';
-      a.targetId=best.id;
-      a.lastSeenAt=now;
-    } else if (a.state==='chase' && (now-a.lastSeenAt) > CONFIG.alienLoseSightMs){
-      a.state='patrol';
-      a.targetId=null;
-    }
-
-    if (a.state==='chase' && a.targetId!=null){
-      const p = players[a.targetId];
-      if (p && !p.dead){
-        const dx=p.x-a.x, dy=p.y-a.y;
-        const d=Math.hypot(dx,dy)||1;
-        a.vx = (dx/d)*CONFIG.alienChaseSpeed;
-        a.vy = (dy/d)*CONFIG.alienChaseSpeed;
-        a.dir = Math.atan2(a.vy, a.vx);
-      }
-    } else {
-      a.dir += (Math.sin(a.wobble)*0.02) + (Math.random()<0.03 ? rnd(-a.patrolTurn, a.patrolTurn) : 0);
-      a.vx = Math.cos(a.dir)*CONFIG.alienPatrolSpeed;
-      a.vy = Math.sin(a.dir)*CONFIG.alienPatrolSpeed;
-    }
-
-    a.x += a.vx;
-    a.y += a.vy;
-
-    if (a.x < a.r || a.x > CONFIG.worldW-a.r){ a.dir = Math.PI - a.dir; a.x = clamp(a.x, a.r, CONFIG.worldW-a.r); }
-    if (a.y < a.r || a.y > CONFIG.worldH-a.r){ a.dir = -a.dir; a.y = clamp(a.y, a.r, CONFIG.worldH-a.r); }
-
-    for (const o of obstacles){
-      const d = Math.hypot(a.x-o.x, a.y-o.y);
-      const min = a.r + o.r*0.82;
-      if (d>0 && d<min){
-        const nx=(a.x-o.x)/d, ny=(a.y-o.y)/d;
-        a.x = o.x + nx*min;
-        a.y = o.y + ny*min;
-        a.dir += rnd(-0.65, 0.65);
-      }
-    }
-
-    for (const p of players){
-      if (p.dead) continue;
-      if (now < p.invulnUntil) continue;
-      if (p.abducting) continue;
-
-      const pr = CONFIG.playerR * ((now < p.amokUntil) ? CONFIG.amokSizeMul : 1);
-      if (circleHit(a.x,a.y,a.r, p.x,p.y, pr)){
-        if (now < p.amokUntil){
-          const idx = aliens.indexOf(a);
-          if (idx>=0) aliens.splice(idx,1);
-          setStatus(`👹 ${p.skin.name} ate an alien (contact).`);
-          return;
-        } else {
-          startAbduction(p, a);
-          return;
-        }
-      }
-    }
-  }
-
-  function startAbduction(p, alien){
-    const now = performance.now();
-    p.abducting = true;
-    p.abductByAlien = alien;
-    p.abductStartAt = now;
-    p.abductLift = 0;
-
-    alien.beaming = 1;
-
-    doJumpscare();
-    setStatus(`🛸 ${p.skin.name} is being abducted! Bump them to interrupt!`);
-  }
-
-  function updateAbductions(){
-    const now = performance.now();
-    for (const p of players){
-      if (!p.abducting) continue;
-
-      const a = p.abductByAlien;
-      if (a) a.beaming = 1;
-
-      for (const helper of players){
-        if (helper === p) continue;
-        if (helper.dead) continue;
-
-        const hr = CONFIG.playerR * ((now < helper.amokUntil) ? CONFIG.amokSizeMul : 1);
-        if (circleHit(helper.x, helper.y, hr, p.x, p.y, CONFIG.abductInterruptRadius)){
-          p.abducting = false;
-          p.abductByAlien = null;
-          p.abductLift = 0;
-          p.invulnUntil = now + 700;
-          setStatus(`✅ Abduction interrupted!`);
-          return;
-        }
-      }
-
-      if (now - p.abductStartAt >= CONFIG.abductLockMs){
-        p.abducting = false;
-        p.abductByAlien = null;
-        p.abductLift = 0;
-        p.invulnUntil = now + CONFIG.abductInvulnMs;
-        catchPlayer(p, {byAlien:true});
-      }
-    }
-  }
-
-  function catchPlayer(p, meta){
-    p.livesLeft -= 1;
-    flashFound();
-
-    setStatus(meta?.byPlayer
-      ? `😼 ${p.skin.name} got eaten by AMOK cat. (-1)`
-      : `👽 ${p.skin.name} got abducted. (-1)`);
-
-    if (p.livesLeft <= 0){
-      p.dead = true;
-      setStatus(`💀 ${p.skin.name} is OUT!`);
-    }
-
-    p.x = rnd(120, CONFIG.worldW-120);
-    p.y = rnd(120, CONFIG.worldH-120);
-    p.vx = p.vy = 0;
-
-    renderHUD();
-
-    const alive = players.filter(pp => !pp.dead);
-    if (alive.length <= 1){
-      game.paused = true;
-      const winner = alive[0];
-      setStatus(winner ? `🏆 ${winner.skin.name} survives. Press R.` : `No survivors. Press R.`);
-    }
-  }
-
-  // DRAW
-  function roundRect(ctx,x,y,w,h,r){
-    r = Math.min(r, w/2, h/2);
-    ctx.beginPath();
-    ctx.moveTo(x+r, y);
-    ctx.arcTo(x+w, y, x+w, y+h, r);
-    ctx.arcTo(x+w, y+h, x, y+h, r);
-    ctx.arcTo(x, y+h, x, y, r);
-    ctx.arcTo(x, y, x+w, y, r);
-    ctx.closePath();
-  }
-
-  function renderBG(){
-    const g = ctx.createLinearGradient(0,0,0,H);
-    g.addColorStop(0, '#04060a');
-    g.addColorStop(1, '#071119');
-    ctx.fillStyle = g;
-    ctx.fillRect(0,0,W,H);
-    ctx.fillStyle = 'rgba(0,0,0,.35)';
-    ctx.fillRect(0,0,W,CONFIG.topHudH);
-  }
-
-  function drawPlayerSprite(p, viewId){
-    const cam = cams[viewId];
-    const now = performance.now();
-    const baseR = CONFIG.playerR;
-    const amok = now < p.amokUntil;
-    const r = amok ? baseR*CONFIG.amokSizeMul : baseR;
-
-    const sx = cam.x + (p.x - cam.wx);
-    const sy = cam.y + (p.y - cam.wy) - (p.abducting ? p.abductLift : 0);
-
-    // aura / outline
-    ctx.save();
-    ctx.globalAlpha = 0.9;
-    if (amok){
-      const g = ctx.createRadialGradient(sx,sy, r*0.2, sx,sy, r*2.1);
-      g.addColorStop(0, 'rgba(255,120,0,.35)');
-      g.addColorStop(1, 'rgba(255,120,0,0)');
-      ctx.fillStyle = g;
-      ctx.beginPath();
-      ctx.arc(sx,sy, r*2.0, 0, Math.PI*2);
-      ctx.fill();
-    }
-
-    // draw the GIF on canvas
-    const img = catImgs[p.skin.gifIndex];
-    if (img && img.complete && img.naturalWidth > 0){
-      ctx.save();
-      // circle clip so it looks like avatar bubble
-      ctx.beginPath();
-      ctx.arc(sx,sy, r, 0, Math.PI*2);
-      ctx.clip();
-
-      // blink when invuln
-      if (now < p.invulnUntil && (Math.floor(now/90)%2)) ctx.globalAlpha = 0.35;
-
-      ctx.drawImage(img, sx-r, sy-r, r*2, r*2);
-      ctx.restore();
-
-      // border ring
-      ctx.lineWidth = 3;
-      ctx.strokeStyle = amok ? 'rgba(255,160,60,.65)' : 'rgba(255,255,255,.16)';
-      ctx.beginPath();
-      ctx.arc(sx,sy, r, 0, Math.PI*2);
-      ctx.stroke();
-    } else {
-      // fallback: colored circle if gif fails to load
-      ctx.fillStyle = p.skin.color;
-      ctx.beginPath();
-      ctx.arc(sx,sy, r, 0, Math.PI*2);
-      ctx.fill();
-    }
-    ctx.restore();
-  }
-
-  function drawWorld(viewId){
-    const cam = cams[viewId];
-    ctx.save();
-
-    // clip viewport
-    ctx.beginPath();
-    ctx.rect(cam.x, cam.y, cam.w, cam.h);
-    ctx.clip();
-
-    // translate into world
-    ctx.translate(cam.x - cam.wx, cam.y - cam.wy);
-
-    // grid
-    ctx.save();
-    ctx.globalAlpha = 0.07;
-    ctx.strokeStyle = '#ffffff';
-    for (let x=0; x<=CONFIG.worldW; x+=120){
-      ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,CONFIG.worldH); ctx.stroke();
-    }
-    for (let y=0; y<=CONFIG.worldH; y+=120){
-      ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(CONFIG.worldW,y); ctx.stroke();
-    }
-    ctx.restore();
-
-    // obstacles
-    for (const o of obstacles){
-      o.sway += 0.02;
-      ctx.save();
-      ctx.globalAlpha = 0.25;
-      ctx.fillStyle = '#000';
-      ctx.beginPath();
-      ctx.ellipse(o.x+5, o.y+7, o.r*1.02, o.r*0.78, 0, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-
-      if (o.kind==='bush'){
-        const wig = Math.sin(o.sway)*2.4;
-        ctx.fillStyle = '#114f2b';
-        ctx.beginPath();
-        ctx.ellipse(o.x, o.y, o.r+wig, o.r*0.84, 0, 0, Math.PI*2);
-        ctx.fill();
-      } else {
-        ctx.fillStyle = '#3e261a';
-        ctx.fillRect(o.x-6, o.y+o.r*0.18, 12, o.r*0.86);
-        const wig = Math.sin(o.sway)*2.0;
-        ctx.fillStyle = '#1d7a3a';
-        ctx.beginPath();
-        ctx.arc(o.x, o.y, o.r+wig, 0, Math.PI*2);
-        ctx.fill();
-      }
-    }
-
-    // question
-    if (questionBox){
-      questionBox.bob += 0.06;
-      const bobY = Math.sin(questionBox.bob)*4;
-      const x = questionBox.x;
-      const y = questionBox.y + bobY;
-      ctx.save();
-      const rg = ctx.createRadialGradient(x,y, 6, x,y, 42);
-      rg.addColorStop(0, 'rgba(255,210,110,.55)');
-      rg.addColorStop(1, 'rgba(255,210,110,0)');
-      ctx.fillStyle = rg;
-      ctx.beginPath();
-      ctx.arc(x,y, 42, 0, Math.PI*2);
-      ctx.fill();
-      ctx.restore();
-
-      ctx.fillStyle = '#f3c550';
-      ctx.strokeStyle = '#241b07';
-      ctx.lineWidth = 3;
-      ctx.beginPath();
-      roundRect(ctx, x-16, y-16, 32, 32, 7);
-      ctx.fill(); ctx.stroke();
-      ctx.fillStyle = '#241b07';
-      ctx.font = '900 18px system-ui';
-      ctx.textAlign = 'center';
-      ctx.textBaseline = 'middle';
-      ctx.fillText('?', x, y+1);
-    }
-
-    // aliens
-    for (const a of aliens){
-      ctx.save();
-      ctx.globalAlpha = 0.06;
-      ctx.fillStyle = a.state==='chase' ? 'rgba(255,80,170,.9)' : 'rgba(80,255,210,.9)';
-      ctx.beginPath();
-      ctx.moveTo(a.x,a.y);
-      ctx.arc(a.x,a.y, CONFIG.alienBaseView*0.43, a.dir-0.65, a.dir+0.65);
-      ctx.closePath();
-      ctx.fill();
-      ctx.restore();
-
-      if (a.beaming > 0.05){
-        ctx.save();
-        ctx.globalAlpha = 0.20 + 0.35*a.beaming;
-        ctx.fillStyle = 'rgba(150,255,220,.8)';
-        ctx.beginPath();
-        ctx.moveTo(a.x, a.y);
-        ctx.lineTo(a.x-22, a.y+70);
-        ctx.lineTo(a.x+22, a.y+70);
-        ctx.closePath();
-        ctx.fill();
-        ctx.restore();
-      }
-
-      const pulse = Math.sin(a.wobble)*1.6;
-      ctx.fillStyle = a.state==='chase' ? '#ff4fb8' : '#52ffd2';
-      ctx.beginPath();
-      ctx.ellipse(a.x, a.y, a.r+2, a.r+7+pulse, 0, 0, Math.PI*2);
-      ctx.fill();
-
-      ctx.fillStyle = '#05070a';
-      ctx.beginPath();
-      ctx.ellipse(a.x-5, a.y-3, 4, 6, 0, 0, Math.PI*2);
-      ctx.ellipse(a.x+5, a.y-3, 4, 6, 0, 0, Math.PI*2);
-      ctx.fill();
-    }
-
-    ctx.restore(); // undo world translate (but still clipped by viewport)
-    // draw players in viewport coords (not world coords) for correct abduct lift
-    for (const p of players){
-      drawPlayerSprite(p, viewId);
-    }
-  }
-
-  function render(){
-    renderBG();
-    updateCams();
-    drawWorld(0);
-    drawWorld(1);
-  }
-
-  // ====== ABDUCTION ======
-  function startAbduction(p, alien){
-    const now = performance.now();
-    p.abducting = true;
-    p.abductByAlien = alien;
-    p.abductStartAt = now;
-    p.abductLift = 0;
-    alien.beaming = 1;
-    doJumpscare();
-    setStatus(`🛸 ${p.skin.name} is being abducted! Bump them to interrupt!`);
-  }
-
-  function updateAbductions(){
-    const now = performance.now();
-    for (const p of players){
-      if (!p.abducting) continue;
-
-      const a = p.abductByAlien;
-      if (a) a.beaming = 1;
-
-      for (const helper of players){
-        if (helper===p) continue;
-        if (helper.dead) continue;
-
-        const hr = CONFIG.playerR * ((now < helper.amokUntil) ? CONFIG.amokSizeMul : 1);
-        if (circleHit(helper.x, helper.y, hr, p.x, p.y, CONFIG.abductInterruptRadius)){
-          p.abducting = false;
-          p.abductByAlien = null;
-          p.abductLift = 0;
-          p.invulnUntil = now + 700;
-          setStatus(`✅ Abduction interrupted!`);
-          return;
-        }
-      }
-
-      if (now - p.abductStartAt >= CONFIG.abductLockMs){
-        p.abducting = false;
-        p.abductByAlien = null;
-        p.abductLift = 0;
-        p.invulnUntil = now + CONFIG.abductInvulnMs;
-        catchPlayer(p, {byAlien:true});
-      }
-    }
-  }
-
-  // ====== MAIN LOOP ======
-  function tick(){
-    for (const p of players){ handleInput(p); updatePlayer(p); }
-    applyAmok();
-    for (let i=aliens.length-1;i>=0;i--) updateAlien(aliens[i]);
-    updateAbductions();
-    updateCams();
-    renderHUD();
-  }
-
-  function loop(t){
-    requestAnimationFrame(loop);
-    if (!game.running) return;
-    if (game.paused) { render(); return; }
-
-    let delta = t - game.last;
-    game.last = t;
-    if (delta > 120) delta = 120;
-    game.acc += delta;
-
-    while (game.acc >= game.dt){
-      tick();
-      game.acc -= game.dt;
-    }
-    render();
-  }
-
-  function resetGame(){
-    game.paused = false;
-    setStatus("Hide smart. Stand still in cover to build stealth.");
-    spawnObstacles();
-    spawnQuestionBox();
-    spawnPlayers();
-    aliens.length=0;
-    spawnAliens(CONFIG.alienBase);
-    updateCams();
-    renderHUD();
-    ui.timer.textContent = "Stealth up: stand still in bushes";
-  }
-
-  function start(){
-    if (game.running) return;
-    game.running = true;
-    ui.startScreen.style.display = 'none';
-    resetGame();
-    game.last = performance.now();
-    requestAnimationFrame(loop);
-  }
-
-  ui.startBtn.addEventListener('click', start);
-  addEventListener('keydown', (e)=>{
-    if (e.key.toLowerCase()==='p'){ game.paused = !game.paused; setStatus(game.paused ? "Paused" : ""); }
-    if (e.key.toLowerCase()==='r'){ resetGame(); }
-  });
-
-})();
+  html += `
+    <strong>Partner-level suggestion:</strong>
+    <ul>
+      <li>Explicitly name what effort they <em>don’t</em> need to invest.</li>
+      <li>Anchor upside: insight, pattern recognition, or blind-spot coverage.</li>
+      <li>Offer a time-boxed test with a clear exit.</li>
+    </ul>
+  `;
+
+  feedbackEl.innerHTML = html;
+  result.style.display = "block";
+  result.scrollIntoView({ behavior: "smooth" });
+}
 </script>
+
 </body>
 </html>
