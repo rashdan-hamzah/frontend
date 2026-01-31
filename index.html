@@ -1,331 +1,289 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <title>Consulting Conversation Simulator</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta charset="UTF-8" />
+<title>Consulting Conversation Trainer</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    :root {
-      --bg: #020617;
-      --card: #0f172a;
-      --panel: #020617;
-      --accent: #38bdf8;
-      --muted: #94a3b8;
-      --danger: #f87171;
-      --success: #4ade80;
-      --text: #e5e7eb;
-    }
+<style>
+:root {
+  --bg:#020617;
+  --card:#0f172a;
+  --panel:#020617;
+  --accent:#38bdf8;
+  --muted:#94a3b8;
+  --success:#4ade80;
+  --danger:#f87171;
+  --text:#e5e7eb;
+}
 
-    * {
-      box-sizing: border-box;
-      font-family: system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
-    }
+* { box-sizing:border-box; font-family:system-ui,-apple-system,sans-serif }
 
-    body {
-      margin: 0;
-      background: linear-gradient(180deg, #020617, #020617);
-      color: var(--text);
-      min-height: 100vh;
-      display: flex;
-      justify-content: center;
-      padding: 32px;
-    }
+body {
+  margin:0;
+  background:linear-gradient(180deg,#020617,#020617);
+  color:var(--text);
+  padding:32px;
+  display:flex;
+  justify-content:center;
+}
 
-    .app {
-      max-width: 900px;
-      width: 100%;
-    }
+.app { max-width:1000px; width:100%; }
 
-    header {
-      margin-bottom: 24px;
-    }
+h1 { margin:0; font-size:28px }
+.subtitle { color:var(--muted); font-size:14px; margin-top:6px }
 
-    h1 {
-      font-size: 28px;
-      margin: 0;
-      font-weight: 700;
-    }
+.card {
+  background:var(--card);
+  padding:20px;
+  border-radius:12px;
+  margin-bottom:20px;
+  box-shadow:0 10px 30px rgba(0,0,0,.4);
+}
 
-    .subtitle {
-      color: var(--muted);
-      margin-top: 6px;
-      font-size: 14px;
-    }
+.label {
+  font-size:12px;
+  text-transform:uppercase;
+  letter-spacing:.08em;
+  color:var(--muted);
+  margin-bottom:6px;
+}
 
-    .card {
-      background: var(--card);
-      border-radius: 12px;
-      padding: 20px;
-      margin-bottom: 20px;
-      box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-    }
+.grid {
+  display:grid;
+  grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+  gap:12px;
+}
 
-    .label {
-      font-size: 12px;
-      text-transform: uppercase;
-      letter-spacing: 0.08em;
-      color: var(--muted);
-      margin-bottom: 8px;
-    }
+select, textarea {
+  width:100%;
+  background:var(--panel);
+  border:1px solid #1e293b;
+  border-radius:8px;
+  padding:12px;
+  color:var(--text);
+  font-size:14px;
+}
 
-    .scenario {
-      line-height: 1.6;
-      font-size: 16px;
-    }
+textarea { min-height:140px; resize:vertical }
 
-    select, textarea {
-      width: 100%;
-      background: var(--panel);
-      border: 1px solid #1e293b;
-      border-radius: 8px;
-      padding: 14px;
-      color: var(--text);
-      font-size: 15px;
-    }
+select:focus, textarea:focus {
+  outline:none;
+  border-color:var(--accent);
+}
 
-    select {
-      cursor: pointer;
-    }
+button {
+  background:var(--accent);
+  color:#020617;
+  border:none;
+  padding:12px 18px;
+  border-radius:8px;
+  font-weight:600;
+  cursor:pointer;
+}
 
-    textarea {
-      min-height: 140px;
-      resize: vertical;
-    }
+.score {
+  font-size:34px;
+  font-weight:700;
+}
 
-    textarea:focus, select:focus {
-      outline: none;
-      border-color: var(--accent);
-    }
+.good { color:var(--success) }
+.ok { color:var(--accent) }
+.bad { color:var(--danger) }
 
-    button {
-      background: var(--accent);
-      color: #020617;
-      border: none;
-      padding: 12px 18px;
-      border-radius: 8px;
-      font-weight: 600;
-      font-size: 14px;
-      cursor: pointer;
-      transition: transform 0.1s ease, opacity 0.1s ease;
-    }
+.progress {
+  display:flex;
+  justify-content:space-between;
+  margin-top:10px;
+  font-size:13px;
+}
 
-    button:hover {
-      transform: translateY(-1px);
-      opacity: 0.9;
-    }
-
-    .score {
-      font-size: 32px;
-      font-weight: 700;
-      margin-bottom: 8px;
-    }
-
-    .score.good { color: var(--success); }
-    .score.ok { color: var(--accent); }
-    .score.bad { color: var(--danger); }
-
-    ul {
-      padding-left: 20px;
-    }
-
-    li {
-      margin-bottom: 8px;
-    }
-
-    footer {
-      text-align: center;
-      font-size: 12px;
-      color: var(--muted);
-      margin-top: 40px;
-    }
-  </style>
+footer {
+  text-align:center;
+  color:var(--muted);
+  font-size:12px;
+  margin-top:40px;
+}
+</style>
 </head>
 
 <body>
 <div class="app">
 
-  <header>
-    <h1>Consulting Conversation Simulator</h1>
-    <div class="subtitle">
-      Practice real objections · Partner-level framing · Commercial clarity
-    </div>
-  </header>
+<header>
+<h1>Consulting Conversation Trainer</h1>
+<div class="subtitle">Industry · Stakeholder · Commercial judgment</div>
+</header>
 
-  <div class="card">
-    <div class="label">Choose Situation</div>
-    <select id="scenarioSelect" onchange="loadScenario()"></select>
-  </div>
+<div class="card">
+<div class="label">Scenario Filters</div>
+<div class="grid">
+<select id="industry">
+<option value="">Industry (Any)</option>
+<option>Professional Services</option>
+<option>Healthcare</option>
+<option>Retail</option>
+<option>Manufacturing</option>
+</select>
 
-  <div class="card">
-    <div class="label" id="scenarioTitle"></div>
-    <div class="scenario" id="scenarioText"></div>
-  </div>
+<select id="department">
+<option value="">Department (Any)</option>
+<option>Finance</option>
+<option>Operations</option>
+<option>Sales</option>
+<option>Management</option>
+</select>
 
-  <div class="card">
-    <div class="label">Your Response</div>
-    <textarea id="response" placeholder="Type what you would say next..."></textarea>
-    <br><br>
-    <button onclick="evaluateResponse()">Evaluate Response</button>
-  </div>
+<select id="stakeholder">
+<option value="">Stakeholder (Any)</option>
+<option>Owner</option>
+<option>Managing Partner</option>
+<option>CFO</option>
+<option>Manager</option>
+</select>
 
-  <div class="card" id="result" style="display:none;">
-    <div class="label">Assessment</div>
-    <div id="score" class="score"></div>
-    <div id="feedback"></div>
-  </div>
+<select id="type">
+<option value="">Conversation Type (Any)</option>
+<option>Fee Resistance</option>
+<option>Capability Pushback</option>
+<option>Short-Term Objection</option>
+<option>Decision Delay</option>
+</select>
 
-  <footer>
-    Static MVP · GitHub Pages compatible
-  </footer>
+<select id="random">
+<option value="no">Mode: Filtered</option>
+<option value="yes">Mode: Random</option>
+</select>
+</div>
+</div>
+
+<div class="card">
+<div class="label">Scenario</div>
+<div id="scenarioText"></div>
+</div>
+
+<div class="card">
+<div class="label">Your Response</div>
+<textarea id="response"></textarea><br><br>
+<button onclick="evaluate()">Evaluate</button>
+</div>
+
+<div class="card" id="result" style="display:none">
+<div class="label">Assessment</div>
+<div id="score" class="score"></div>
+<div id="level"></div>
+<div id="feedback"></div>
+</div>
+
+<footer>
+Static MVP · GitHub Pages · Progression enabled
+</footer>
 
 </div>
 
 <script>
-const scenarios = [
-  {
-    id: 1,
-    title: "Situation 1 – Short-Term Objection",
-    text: `
-You’re speaking to a managing partner of a small advisory firm in Melaka.
+let totalScore = 0;
+let attempts = 0;
 
-He says:
-
-“You’re sharp, but we don’t usually take short-term people. It’s not worth the effort.”
-    `,
-    focus: ["low-risk", "specific", "contained"]
-  },
-  {
-    id: 2,
-    title: "Situation 2 – Fee Resistance",
-    text: `
-An SME owner says:
-
-“Honestly, your fee feels high. Other people charge less.”
-    `,
-    focus: ["value", "upside", "comparison"]
-  },
-  {
-    id: 3,
-    title: "Situation 3 – Internal Capability Pushback",
-    text: `
-The owner responds:
-
-“We already have staff doing this internally. I don’t see why we need help.”
-    `,
-    focus: ["blind spot", "outside view", "risk"]
-  },
-  {
-    id: 4,
-    title: "Situation 4 – Decision Dragging",
-    text: `
-After several discussions, the owner says:
-
-“Let me think about it first. I’ll get back to you.”
-    `,
-    focus: ["decision path", "next step", "momentum"]
-  },
-  {
-    id: 5,
-    title: "Situation 5 – Existing Advisor",
-    text: `
-The owner tells you:
-
-“We already have an accountant/advisor handling this.”
-    `,
-    focus: ["complement", "gap", "non-threatening"]
-  }
+const levels = [
+  { name:"Trainee", min:0 },
+  { name:"Consultant", min:60 },
+  { name:"Senior Consultant", min:70 },
+  { name:"Advisor", min:80 },
+  { name:"Partner-Level", min:90 }
 ];
 
-const select = document.getElementById("scenarioSelect");
-
-scenarios.forEach(s => {
-  const opt = document.createElement("option");
-  opt.value = s.id;
-  opt.textContent = s.title;
-  select.appendChild(opt);
-});
+const scenarios = [
+{
+industry:"Professional Services",
+department:"Management",
+stakeholder:"Managing Partner",
+type:"Short-Term Objection",
+text:"“You’re sharp, but we don’t usually take short-term people. It’s not worth the effort.”"
+},
+{
+industry:"Healthcare",
+department:"Finance",
+stakeholder:"Owner",
+type:"Fee Resistance",
+text:"“Your fee feels expensive. Other advisors charge less.”"
+},
+{
+industry:"Retail",
+department:"Operations",
+stakeholder:"Manager",
+type:"Capability Pushback",
+text:"“We already handle this internally.”"
+},
+{
+industry:"Manufacturing",
+department:"Management",
+stakeholder:"CFO",
+type:"Decision Delay",
+text:"“Let’s revisit this next quarter.”"
+}
+];
 
 loadScenario();
 
 function loadScenario() {
-  const scenario = scenarios.find(s => s.id == select.value);
-  document.getElementById("scenarioTitle").textContent = scenario.title;
-  document.getElementById("scenarioText").textContent = scenario.text.trim();
-  document.getElementById("result").style.display = "none";
-  document.getElementById("response").value = "";
+const randomMode = document.getElementById("random").value === "yes";
+
+let pool = scenarios.filter(s => {
+if (randomMode) return true;
+return (!industry.value || s.industry===industry.value)
+&& (!department.value || s.department===department.value)
+&& (!stakeholder.value || s.stakeholder===stakeholder.value)
+&& (!type.value || s.type===type.value);
+});
+
+if (pool.length===0) pool = scenarios;
+const s = pool[Math.floor(Math.random()*pool.length)];
+document.getElementById("scenarioText").textContent = s.text;
 }
 
-function evaluateResponse() {
-  const text = document.getElementById("response").value.toLowerCase();
-  const scenario = scenarios.find(s => s.id == select.value);
+document.querySelectorAll("select").forEach(el => el.addEventListener("change", loadScenario));
 
-  let score = 50;
-  let positives = [];
-  let negatives = [];
+function evaluate() {
+const text = response.value.toLowerCase();
+let score = 50;
+let notes = [];
 
-  if (text.includes("understand") || text.includes("fair")) {
-    score += 10;
-    positives.push("You acknowledged their position without resistance.");
-  }
+if (text.includes("understand")||text.includes("fair")) {
+score+=10; notes.push("Validated stakeholder position.");
+}
+if (text.includes("risk")||text.includes("test")||text.includes("pilot")) {
+score+=15; notes.push("Reduced perceived risk.");
+}
+if (text.includes("specific")||text.includes("scope")||text.includes("task")) {
+score+=10; notes.push("Defined clear scope.");
+}
+if (text.includes("next step")||text.includes("decide")) {
+score+=10; notes.push("Introduced decision momentum.");
+}
+if (text.includes("please")||text.includes("hope")) {
+score-=10; notes.push("Tone slightly permission-seeking.");
+}
 
-  if (text.includes("specific") || text.includes("task") || text.includes("scope")) {
-    score += 10;
-    positives.push("You defined a contained scope instead of vague help.");
-  }
+score=Math.max(0,Math.min(100,score));
 
-  if (text.includes("risk") || text.includes("test") || text.includes("trial")) {
-    score += 10;
-    positives.push("You reduced perceived downside for them.");
-  }
+attempts++;
+totalScore+=score;
+const avg=Math.round(totalScore/attempts);
 
-  if (text.includes("value") || text.includes("impact") || text.includes("outcome")) {
-    score += 10;
-    positives.push("You framed your role around outcomes, not effort.");
-  }
+let lvl=levels[0].name;
+levels.forEach(l=>{ if(avg>=l.min) lvl=l.name });
 
-  if (text.includes("please") || text.includes("hope")) {
-    score -= 10;
-    negatives.push("Language leans toward permission-seeking.");
-  }
+scoreEl.textContent = score+"/100";
+scoreEl.className="score "+(score>=75?"good":score<50?"bad":"ok");
+level.innerHTML = `<strong>Current Level:</strong> ${lvl} <div class="progress"><span>Avg Score: ${avg}</span><span>Attempts: ${attempts}</span></div>`;
 
-  if (text.length < 120) {
-    score -= 10;
-    negatives.push("Response may be too short to reframe the objection.");
-  }
+feedback.innerHTML = "<ul>"+notes.map(n=>`<li>${n}</li>`).join("")+"</ul><strong>Upgrade:</strong> Push commercial downside and force a clean decision path.";
 
-  score = Math.max(0, Math.min(100, score));
-
-  const scoreEl = document.getElementById("score");
-  scoreEl.textContent = score + "/100";
-  scoreEl.className = "score " + (score >= 75 ? "good" : score < 50 ? "bad" : "ok");
-
-  let feedback = "";
-
-  if (positives.length) {
-    feedback += "<strong>What worked:</strong><ul>";
-    positives.forEach(p => feedback += `<li>${p}</li>`);
-    feedback += "</ul>";
-  }
-
-  if (negatives.length) {
-    feedback += "<strong>What weakened it:</strong><ul>";
-    negatives.forEach(n => feedback += `<li>${n}</li>`);
-    feedback += "</ul>";
-  }
-
-  feedback += `
-<strong>Consultant-level upgrade:</strong>
-<ul>
-  <li>Explicitly state what degrades if no action is taken.</li>
-  <li>Offer a time-boxed, low-effort next step.</li>
-  <li>Anchor your role as risk containment, not assistance.</li>
-</ul>
-  `;
-
-  document.getElementById("feedback").innerHTML = feedback;
-  document.getElementById("result").style.display = "block";
-  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
+result.style.display="block";
+result.scrollIntoView({behavior:"smooth"});
+response.value="";
+loadScenario();
 }
 </script>
 
