@@ -7,9 +7,9 @@
 
   <style>
     :root {
-      --bg: #0f172a;
-      --panel: #111827;
-      --card: #1f2933;
+      --bg: #020617;
+      --card: #0f172a;
+      --panel: #020617;
       --accent: #38bdf8;
       --muted: #94a3b8;
       --danger: #f87171;
@@ -24,7 +24,7 @@
 
     body {
       margin: 0;
-      background: linear-gradient(180deg, #020617, #0f172a);
+      background: linear-gradient(180deg, #020617, #020617);
       color: var(--text);
       min-height: 100vh;
       display: flex;
@@ -74,19 +74,26 @@
       font-size: 16px;
     }
 
-    textarea {
+    select, textarea {
       width: 100%;
-      min-height: 140px;
-      background: #020617;
+      background: var(--panel);
       border: 1px solid #1e293b;
       border-radius: 8px;
       padding: 14px;
       color: var(--text);
       font-size: 15px;
+    }
+
+    select {
+      cursor: pointer;
+    }
+
+    textarea {
+      min-height: 140px;
       resize: vertical;
     }
 
-    textarea:focus {
+    textarea:focus, select:focus {
       outline: none;
       border-color: var(--accent);
     }
@@ -118,11 +125,11 @@
     .score.ok { color: var(--accent); }
     .score.bad { color: var(--danger); }
 
-    .feedback ul {
+    ul {
       padding-left: 20px;
     }
 
-    .feedback li {
+    li {
       margin-bottom: 8px;
     }
 
@@ -136,125 +143,189 @@
 </head>
 
 <body>
-  <div class="app">
+<div class="app">
 
-    <header>
-      <h1>Consulting Conversation Simulator</h1>
-      <div class="subtitle">
-        Partner-level objections · Commercial framing · Low-risk positioning
-      </div>
-    </header>
-
-    <div class="card">
-      <div class="label">Situation 9</div>
-      <div class="scenario">
-        You’re speaking to a managing partner of a small advisory firm in Melaka.
-        <br><br>
-        He says:
-        <br><br>
-        <strong>“You’re sharp, but we don’t usually take short-term people. It’s not worth the effort.”</strong>
-      </div>
+  <header>
+    <h1>Consulting Conversation Simulator</h1>
+    <div class="subtitle">
+      Practice real objections · Partner-level framing · Commercial clarity
     </div>
+  </header>
 
-    <div class="card">
-      <div class="label">Your Response</div>
-      <textarea id="response" placeholder="Type what you would say next..."></textarea>
-      <br><br>
-      <button onclick="evaluateResponse()">Evaluate Response</button>
-    </div>
-
-    <div class="card" id="result" style="display:none;">
-      <div class="label">Assessment</div>
-      <div id="score" class="score"></div>
-      <div class="feedback" id="feedback"></div>
-    </div>
-
-    <footer>
-      MVP build · Static mode (GitHub Pages)
-    </footer>
-
+  <div class="card">
+    <div class="label">Choose Situation</div>
+    <select id="scenarioSelect" onchange="loadScenario()"></select>
   </div>
 
+  <div class="card">
+    <div class="label" id="scenarioTitle"></div>
+    <div class="scenario" id="scenarioText"></div>
+  </div>
+
+  <div class="card">
+    <div class="label">Your Response</div>
+    <textarea id="response" placeholder="Type what you would say next..."></textarea>
+    <br><br>
+    <button onclick="evaluateResponse()">Evaluate Response</button>
+  </div>
+
+  <div class="card" id="result" style="display:none;">
+    <div class="label">Assessment</div>
+    <div id="score" class="score"></div>
+    <div id="feedback"></div>
+  </div>
+
+  <footer>
+    Static MVP · GitHub Pages compatible
+  </footer>
+
+</div>
+
 <script>
+const scenarios = [
+  {
+    id: 1,
+    title: "Situation 1 – Short-Term Objection",
+    text: `
+You’re speaking to a managing partner of a small advisory firm in Melaka.
+
+He says:
+
+“You’re sharp, but we don’t usually take short-term people. It’s not worth the effort.”
+    `,
+    focus: ["low-risk", "specific", "contained"]
+  },
+  {
+    id: 2,
+    title: "Situation 2 – Fee Resistance",
+    text: `
+An SME owner says:
+
+“Honestly, your fee feels high. Other people charge less.”
+    `,
+    focus: ["value", "upside", "comparison"]
+  },
+  {
+    id: 3,
+    title: "Situation 3 – Internal Capability Pushback",
+    text: `
+The owner responds:
+
+“We already have staff doing this internally. I don’t see why we need help.”
+    `,
+    focus: ["blind spot", "outside view", "risk"]
+  },
+  {
+    id: 4,
+    title: "Situation 4 – Decision Dragging",
+    text: `
+After several discussions, the owner says:
+
+“Let me think about it first. I’ll get back to you.”
+    `,
+    focus: ["decision path", "next step", "momentum"]
+  },
+  {
+    id: 5,
+    title: "Situation 5 – Existing Advisor",
+    text: `
+The owner tells you:
+
+“We already have an accountant/advisor handling this.”
+    `,
+    focus: ["complement", "gap", "non-threatening"]
+  }
+];
+
+const select = document.getElementById("scenarioSelect");
+
+scenarios.forEach(s => {
+  const opt = document.createElement("option");
+  opt.value = s.id;
+  opt.textContent = s.title;
+  select.appendChild(opt);
+});
+
+loadScenario();
+
+function loadScenario() {
+  const scenario = scenarios.find(s => s.id == select.value);
+  document.getElementById("scenarioTitle").textContent = scenario.title;
+  document.getElementById("scenarioText").textContent = scenario.text.trim();
+  document.getElementById("result").style.display = "none";
+  document.getElementById("response").value = "";
+}
+
 function evaluateResponse() {
   const text = document.getElementById("response").value.toLowerCase();
-  const result = document.getElementById("result");
-  const scoreEl = document.getElementById("score");
-  const feedbackEl = document.getElementById("feedback");
+  const scenario = scenarios.find(s => s.id == select.value);
 
   let score = 50;
   let positives = [];
   let negatives = [];
 
-  // Heuristic scoring (mock AI logic)
   if (text.includes("understand") || text.includes("fair")) {
     score += 10;
-    positives.push("You validated their position instead of resisting it.");
+    positives.push("You acknowledged their position without resistance.");
   }
 
-  if (text.includes("specific") || text.includes("task") || text.includes("problem")) {
-    score += 15;
-    positives.push("You framed your value around a defined, contained scope.");
-  }
-
-  if (text.includes("risk") || text.includes("low-risk") || text.includes("test")) {
+  if (text.includes("specific") || text.includes("task") || text.includes("scope")) {
     score += 10;
-    positives.push("You reduced perceived hiring risk.");
+    positives.push("You defined a contained scope instead of vague help.");
   }
 
-  if (text.includes("short-term") && text.includes("value")) {
-    score += 5;
-    positives.push("You positioned short-term as intentional, not temporary.");
+  if (text.includes("risk") || text.includes("test") || text.includes("trial")) {
+    score += 10;
+    positives.push("You reduced perceived downside for them.");
+  }
+
+  if (text.includes("value") || text.includes("impact") || text.includes("outcome")) {
+    score += 10;
+    positives.push("You framed your role around outcomes, not effort.");
   }
 
   if (text.includes("please") || text.includes("hope")) {
     score -= 10;
-    negatives.push("Language slightly leans toward permission-seeking.");
+    negatives.push("Language leans toward permission-seeking.");
   }
 
   if (text.length < 120) {
     score -= 10;
-    negatives.push("Response may be too brief to fully reframe value.");
+    negatives.push("Response may be too short to reframe the objection.");
   }
 
-  // Clamp score
   score = Math.max(0, Math.min(100, score));
 
-  // Score color
-  let scoreClass = "ok";
-  if (score >= 75) scoreClass = "good";
-  if (score < 50) scoreClass = "bad";
-
+  const scoreEl = document.getElementById("score");
   scoreEl.textContent = score + "/100";
-  scoreEl.className = "score " + scoreClass;
+  scoreEl.className = "score " + (score >= 75 ? "good" : score < 50 ? "bad" : "ok");
 
-  // Feedback HTML
-  let html = "";
+  let feedback = "";
 
   if (positives.length) {
-    html += "<strong>What worked:</strong><ul>";
-    positives.forEach(p => html += `<li>${p}</li>`);
-    html += "</ul>";
+    feedback += "<strong>What worked:</strong><ul>";
+    positives.forEach(p => feedback += `<li>${p}</li>`);
+    feedback += "</ul>";
   }
 
   if (negatives.length) {
-    html += "<strong>What weakened it:</strong><ul>";
-    negatives.forEach(n => html += `<li>${n}</li>`);
-    html += "</ul>";
+    feedback += "<strong>What weakened it:</strong><ul>";
+    negatives.forEach(n => feedback += `<li>${n}</li>`);
+    feedback += "</ul>";
   }
 
-  html += `
-    <strong>Partner-level suggestion:</strong>
-    <ul>
-      <li>Explicitly name what effort they <em>don’t</em> need to invest.</li>
-      <li>Anchor upside: insight, pattern recognition, or blind-spot coverage.</li>
-      <li>Offer a time-boxed test with a clear exit.</li>
-    </ul>
+  feedback += `
+<strong>Consultant-level upgrade:</strong>
+<ul>
+  <li>Explicitly state what degrades if no action is taken.</li>
+  <li>Offer a time-boxed, low-effort next step.</li>
+  <li>Anchor your role as risk containment, not assistance.</li>
+</ul>
   `;
 
-  feedbackEl.innerHTML = html;
-  result.style.display = "block";
-  result.scrollIntoView({ behavior: "smooth" });
+  document.getElementById("feedback").innerHTML = feedback;
+  document.getElementById("result").style.display = "block";
+  document.getElementById("result").scrollIntoView({ behavior: "smooth" });
 }
 </script>
 
