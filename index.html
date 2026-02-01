@@ -10,62 +10,63 @@
 <body>
 <div class="app">
 
-<header>
-  <h1>Consulting Conversation Trainer</h1>
-  <p class="subtitle">Industry · Stakeholder · Partner-level judgment</p>
-</header>
+  <header>
+    <h1>Consulting Conversation Trainer</h1>
+    <p class="subtitle">Industry · Stakeholder · Partner-level judgment</p>
+  </header>
 
-<section class="card">
-  <h3>Scenario Filters</h3>
-  <div class="grid">
-    <select id="industry">
-      <option value="">Industry (Any)</option>
-      <option>Professional Services</option>
-      <option>Healthcare</option>
-      <option>Retail</option>
-      <option>Manufacturing</option>
-    </select>
+  <section class="card">
+    <h3>Scenario Filters</h3>
+    <div class="grid">
 
-    <select id="stakeholder">
-      <option value="">Stakeholder (Any)</option>
-      <option>Owner</option>
-      <option>Managing Partner</option>
-      <option>CFO</option>
-      <option>Manager</option>
-    </select>
+      <select id="industry">
+        <option value="">Industry (Any)</option>
+        <option value="Professional Services">Professional Services</option>
+        <option value="Healthcare">Healthcare</option>
+        <option value="Retail">Retail</option>
+        <option value="Manufacturing">Manufacturing</option>
+      </select>
 
-    <select id="conversation">
-      <option value="">Conversation Type (Any)</option>
-      <option>Fee Resistance</option>
-      <option>Short-Term Objection</option>
-      <option>Capability Pushback</option>
-      <option>Decision Delay</option>
-    </select>
+      <select id="department">
+        <option value="">Department (Any)</option>
+        <option value="Finance">Finance</option>
+        <option value="Operations">Operations</option>
+        <option value="Sales">Sales</option>
+      </select>
 
-    <select id="mode">
-      <option value="filtered">Filtered</option>
-      <option value="random">Random</option>
-    </select>
-  </div>
-</section>
+      <select id="stakeholder">
+        <option value="">Stakeholder (Any)</option>
+        <option value="Owner">Owner</option>
+        <option value="Managing Partner">Managing Partner</option>
+        <option value="CFO">CFO</option>
+        <option value="Manager">Manager</option>
+      </select>
 
-<section class="card">
-  <h3>Scenario</h3>
-  <p id="scenarioText"></p>
-</section>
+      <select id="mode">
+        <option value="filtered">Filtered</option>
+        <option value="random">Random</option>
+      </select>
 
-<section class="card">
-  <h3>Your Response</h3>
-  <textarea id="response" placeholder="Type what you would say..."></textarea>
-  <button id="evaluateBtn">Evaluate</button>
-</section>
+    </div>
+  </section>
 
-<section class="card hidden" id="result">
-  <h3>Assessment</h3>
-  <div id="score"></div>
-  <div id="level"></div>
-  <div id="feedback"></div>
-</section>
+  <section class="card">
+    <h3>Scenario</h3>
+    <p id="scenarioText"></p>
+  </section>
+
+  <section class="card">
+    <h3>Your Response</h3>
+    <textarea id="response" placeholder="Type what you would say..."></textarea>
+    <button id="evaluateBtn">Evaluate</button>
+  </section>
+
+  <section class="card hidden" id="result">
+    <h3>Assessment</h3>
+    <div id="score"></div>
+    <div id="level"></div>
+    <div id="feedback"></div>
+  </section>
 
 </div>
 
