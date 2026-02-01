@@ -1,54 +1,75 @@
-const scenarios = [
-  "You’re sharp, but we don’t usually take short-term people.",
-  "Your fees are higher than others.",
-  "We already handle this internally.",
-  "Let me think about it and get back to you."
-];
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Consulting Conversation Trainer</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link rel="stylesheet" href="styles.css">
+</head>
 
-// DOM refs
-const scenarioText = document.getElementById("scenarioText");
-const responseInput = document.getElementById("response");
-const industrySelect = document.getElementById("industry");
-const departmentSelect = document.getElementById("department");
-const stakeholderSelect = document.getElementById("stakeholder");
+<body>
+<div class="app">
 
-// Pick random scenario
-scenarioText.textContent =
-  scenarios[Math.floor(Math.random() * scenarios.length)];
+  <header>
+    <h1>Consulting Conversation Trainer</h1>
+    <p class="subtitle">Industry · Stakeholder · Partner-level judgment</p>
+  </header>
 
-document.getElementById("evaluateBtn").onclick = async () => {
-  const payload = {
-    scenario: scenarioText.textContent,
-    response: responseInput.value,
-    meta: {
-      industry: industrySelect.value,
-      department: departmentSelect.value,
-      stakeholder: stakeholderSelect.value
-    }
-  };
+  <section class="card">
+    <h3>Scenario Filters</h3>
+    <div class="grid">
 
-  const res = await fetch("/api/evaluate", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify(payload)
-  });
+      <select id="industry">
+        <option value="">Industry (Any)</option>
+        <option value="Professional Services">Professional Services</option>
+        <option value="Healthcare">Healthcare</option>
+        <option value="Retail">Retail</option>
+        <option value="Manufacturing">Manufacturing</option>
+      </select>
 
-  const data = await res.json();
+      <select id="department">
+        <option value="">Department (Any)</option>
+        <option value="Finance">Finance</option>
+        <option value="Operations">Operations</option>
+        <option value="Sales">Sales</option>
+      </select>
 
-  if (data.error) {
-    alert("AI Error. Try again.");
-    console.error(data);
-    return;
-  }
+      <select id="stakeholder">
+        <option value="">Stakeholder (Any)</option>
+        <option value="Owner">Owner</option>
+        <option value="Managing Partner">Managing Partner</option>
+        <option value="CFO">CFO</option>
+        <option value="Manager">Manager</option>
+      </select>
 
-  document.getElementById("result").classList.remove("hidden");
-  document.getElementById("score").textContent = `Score: ${data.score}/100`;
-  document.getElementById("level").textContent = `Level: ${data.level}`;
+      <select id="mode">
+        <option value="filtered">Filtered</option>
+        <option value="random">Random</option>
+      </select>
 
-  document.getElementById("feedback").innerHTML = `
-    <h4>Strengths</h4>
-    <ul>${data.strengths.map(s => `<li>${s}</li>`).join("")}</ul>
-    <h4>Improvements</h4>
-    <ul>${data.improvements.map(i => `<li>${i}</li>`).join("")}</ul>
-  `;
-};
+    </div>
+  </section>
+
+  <section class="card">
+    <h3>Scenario</h3>
+    <p id="scenarioText"></p>
+  </section>
+
+  <section class="card">
+    <h3>Your Response</h3>
+    <textarea id="response" placeholder="Type what you would say..."></textarea>
+    <button id="evaluateBtn">Evaluate</button>
+  </section>
+
+  <section class="card hidden" id="result">
+    <h3>Assessment</h3>
+    <div id="score"></div>
+    <div id="level"></div>
+    <div id="feedback"></div>
+  </section>
+
+</div>
+
+<script src="app.js"></script>
+</body>
+</html>
