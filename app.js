@@ -1,75 +1,92 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <title>Consulting Conversation Trainer</title>
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link rel="stylesheet" href="styles.css">
-</head>
+const scenarios = [
+  "You’re sharp, but we don’t usually take short-term people.",
+  "Your fees are higher than others.",
+  "We already handle this internally.",
+  "Let me think about it and get back to you."
+];
 
-<body>
-<div class="app">
+// DOM references
+const scenarioText = document.getElementById("scenarioText");
+const responseInput = document.getElementById("response");
+const industrySelect = document.getElementById("industry");
+const departmentSelect = document.getElementById("department");
+const stakeholderSelect = document.getElementById("stakeholder");
+const modeSelect = document.getElementById("mode");
+const evaluateBtn = document.getElementById("evaluateBtn");
 
-  <header>
-    <h1>Consulting Conversation Trainer</h1>
-    <p class="subtitle">Industry · Stakeholder · Partner-level judgment</p>
-  </header>
+// Defensive check (fail loudly)
+["scenarioText", "response", "industry", "department", "stakeholder", "evaluateBtn"]
+  .forEach(id => {
+    if (!document.getElementById(id)) {
+      console.error(`Missing element with id="${id}"`);
+    }
+  });
 
-  <section class="card">
-    <h3>Scenario Filters</h3>
-    <div class="grid">
+// Scenario logic
+function setRandomScenario() {
+  const random =
+    scenarios[Math.floor(Math.random() * scenarios.length)];
+  scenarioText.textContent = random;
+}
 
-      <select id="industry">
-        <option value="">Industry (Any)</option>
-        <option value="Professional Services">Professional Services</option>
-        <option value="Healthcare">Healthcare</option>
-        <option value="Retail">Retail</option>
-        <option value="Manufacturing">Manufacturing</option>
-      </select>
+// Initial scenario
+setRandomScenario();
 
-      <select id="department">
-        <option value="">Department (Any)</option>
-        <option value="Finance">Finance</option>
-        <option value="Operations">Operations</option>
-        <option value="Sales">Sales</option>
-      </select>
+// Button handler
+evaluateBtn.onclick = async () => {
+  evaluateBtn.disabled = true;
+  evaluateBtn.textContent = "Evaluating...";
 
-      <select id="stakeholder">
-        <option value="">Stakeholder (Any)</option>
-        <option value="Owner">Owner</option>
-        <option value="Managing Partner">Managing Partner</option>
-        <option value="CFO">CFO</option>
-        <option value="Manager">Manager</option>
-      </select>
+  const payload = {
+    scenario: scenarioText.textContent,
+    response: responseInput.value,
+    meta: {
+      industry: industrySelect.value || "Any",
+      department: departmentSelect.value || "Any",
+      stakeholder: stakeholderSelect.value || "Any"
+    }
+  };
 
-      <select id="mode">
-        <option value="filtered">Filtered</option>
-        <option value="random">Random</option>
-      </select>
+  try {
+    const res = await fetch("/api/evaluate", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload)
+    });
 
-    </div>
-  </section>
+    if (!res.ok) {
+      throw new Error(`HTTP ${res.status}`);
+    }
 
-  <section class="card">
-    <h3>Scenario</h3>
-    <p id="scenarioText"></p>
-  </section>
+    const data = await res.json();
 
-  <section class="card">
-    <h3>Your Response</h3>
-    <textarea id="response" placeholder="Type what you would say..."></textarea>
-    <button id="evaluateBtn">Evaluate</button>
-  </section>
+    if (data.error) {
+      throw data;
+    }
 
-  <section class="card hidden" id="result">
-    <h3>Assessment</h3>
-    <div id="score"></div>
-    <div id="level"></div>
-    <div id="feedback"></div>
-  </section>
+    document.getElementById("result").classList.remove("hidden");
+    document.getElementById("score").textContent = `Score: ${data.score}/100`;
+    document.getElementById("level").textContent = `Level: ${data.level}`;
 
-</div>
+    document.getElementById("feedback").innerHTML = `
+      <h4>Strengths</h4>
+      <ul>${data.strengths.map(s => `<li>${s}</li>`).join("")}</ul>
+      <h4>Improvements</h4>
+      <ul>${data.improvements.map(i => `<li>${i}</li>`).join("")}</ul>
+    `;
 
-<script src="app.js"></script>
-</body>
-</html>
+    // Rotate scenario after success
+    if (modeSelect.value === "random") {
+      setRandomScenario();
+    }
+
+    responseInput.value = "";
+
+  } catch (err) {
+    alert("Something went wrong. Check console.");
+    console.error(err);
+  } finally {
+    evaluateBtn.disabled = false;
+    evaluateBtn.textContent = "Evaluate";
+  }
+};
