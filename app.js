@@ -1,39 +1,41 @@
-const scenarios = [
-  "You’re sharp, but we don’t usually take short-term people.",
-  "Your fees are higher than others.",
-  "We already handle this internally.",
-  "Let me think about it and get back to you."
-];
-
-// DOM references
 const scenarioText = document.getElementById("scenarioText");
 const responseInput = document.getElementById("response");
 const industrySelect = document.getElementById("industry");
 const departmentSelect = document.getElementById("department");
 const stakeholderSelect = document.getElementById("stakeholder");
 const modeSelect = document.getElementById("mode");
+
+const generateBtn = document.getElementById("generateBtn");
 const evaluateBtn = document.getElementById("evaluateBtn");
 
-// Defensive check (fail loudly)
-["scenarioText", "response", "industry", "department", "stakeholder", "evaluateBtn"]
-  .forEach(id => {
-    if (!document.getElementById(id)) {
-      console.error(`Missing element with id="${id}"`);
-    }
-  });
+// TEMP fallback scenarios (until AI generation)
+const fallbackScenarios = [
+  "You’re sharp, but we don’t usually take short-term people.",
+  "Your fees are higher than others.",
+  "We already handle this internally.",
+  "Let me think about it and get back to you."
+];
 
-// Scenario logic
-function setRandomScenario() {
-  const random =
-    scenarios[Math.floor(Math.random() * scenarios.length)];
-  scenarioText.textContent = random;
-}
+// Generate scenario
+generateBtn.onclick = async () => {
+  generateBtn.disabled = true;
+  generateBtn.textContent = "Generating...";
 
-// Initial scenario
-setRandomScenario();
+  // TEMP: random fallback
+  scenarioText.textContent =
+    fallbackScenarios[Math.floor(Math.random() * fallbackScenarios.length)];
 
-// Button handler
+  generateBtn.disabled = false;
+  generateBtn.textContent = "Generate Scenario";
+};
+
+// Evaluate response
 evaluateBtn.onclick = async () => {
+  if (!scenarioText.textContent || scenarioText.textContent.includes("generate")) {
+    alert("Generate a scenario first.");
+    return;
+  }
+
   evaluateBtn.disabled = true;
   evaluateBtn.textContent = "Evaluating...";
 
@@ -54,15 +56,9 @@ evaluateBtn.onclick = async () => {
       body: JSON.stringify(payload)
     });
 
-    if (!res.ok) {
-      throw new Error(`HTTP ${res.status}`);
-    }
+    if (!res.ok) throw new Error(`HTTP ${res.status}`);
 
     const data = await res.json();
-
-    if (data.error) {
-      throw data;
-    }
 
     document.getElementById("result").classList.remove("hidden");
     document.getElementById("score").textContent = `Score: ${data.score}/100`;
@@ -74,16 +70,8 @@ evaluateBtn.onclick = async () => {
       <h4>Improvements</h4>
       <ul>${data.improvements.map(i => `<li>${i}</li>`).join("")}</ul>
     `;
-
-    // Rotate scenario after success
-    if (modeSelect.value === "random") {
-      setRandomScenario();
-    }
-
-    responseInput.value = "";
-
   } catch (err) {
-    alert("Something went wrong. Check console.");
+    alert("Evaluation failed. Check console.");
     console.error(err);
   } finally {
     evaluateBtn.disabled = false;
