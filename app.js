@@ -1,3 +1,5 @@
+console.log("app.js loaded");
+
 const scenarioText = document.getElementById("scenarioText");
 const responseInput = document.getElementById("response");
 const industrySelect = document.getElementById("industry");
