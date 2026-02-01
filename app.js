@@ -10,10 +10,12 @@ const modeSelect = document.getElementById("mode");
 const generateBtn = document.getElementById("generateBtn");
 const evaluateBtn = document.getElementById("evaluateBtn");
 
-// Point directly to your Cloudflare Worker
-const EVALUATE_API_URL = "https://consulting-trainer-api.rashdanhamzah03.workers.dev";
+// Worker base URL (no trailing slash)
+const WORKER_BASE_URL = "https://consulting-trainer-api.rashdanhamzah03.workers.dev";
+const GENERATE_API_URL = `${WORKER_BASE_URL}/generate`;
+const EVALUATE_API_URL = `${WORKER_BASE_URL}/evaluate`;
 
-// TEMP fallback scenarios (until AI generation)
+// Fallback if AI generation fails (optional)
 const fallbackScenarios = [
   "You’re sharp, but we don’t usually take short-term people.",
   "Your fees are higher than others.",
@@ -22,7 +24,6 @@ const fallbackScenarios = [
 ];
 
 function escapeHtml(str) {
-  // Prevent HTML injection since we use innerHTML for lists
   return String(str)
     .replaceAll("&", "&amp;")
     .replaceAll("<", "&lt;")
@@ -31,22 +32,59 @@ function escapeHtml(str) {
     .replaceAll("'", "&#039;");
 }
 
-// Generate scenario
+function getMeta() {
+  return {
+    industry: industrySelect.value || "Any",
+    department: departmentSelect.value || "Any",
+    stakeholder: stakeholderSelect.value || "Any",
+    mode: modeSelect.value || "filtered"
+  };
+}
+
+async function postJson(url, payload) {
+  const res = await fetch(url, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify(payload)
+  });
+
+  const text = await res.text();
+  if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    throw new Error(`Invalid JSON from API: ${text}`);
+  }
+}
+
+// Generate scenario (AI)
 generateBtn.onclick = async () => {
   generateBtn.disabled = true;
   generateBtn.textContent = "Generating...";
 
-  // TEMP: random fallback
-  scenarioText.textContent =
-    fallbackScenarios[Math.floor(Math.random() * fallbackScenarios.length)];
+  try {
+    const data = await postJson(GENERATE_API_URL, { meta: getMeta() });
 
-  generateBtn.disabled = false;
-  generateBtn.textContent = "Generate Scenario";
+    if (!data?.scenario) throw new Error(`API did not return scenario: ${JSON.stringify(data)}`);
+
+    scenarioText.textContent = data.scenario;
+  } catch (err) {
+    console.error(err);
+
+    // Optional fallback so the app still works even if AI fails
+    scenarioText.textContent =
+      fallbackScenarios[Math.floor(Math.random() * fallbackScenarios.length)];
+
+    alert("AI scenario generation failed; using a fallback scenario. Check console for details.");
+  } finally {
+    generateBtn.disabled = false;
+    generateBtn.textContent = "Generate Scenario";
+  }
 };
 
-// Evaluate response
+// Evaluate response (AI)
 evaluateBtn.onclick = async () => {
-  // Basic guards
   if (!scenarioText.textContent || scenarioText.textContent.includes("Click generate")) {
     alert("Generate a scenario first.");
     return;
@@ -64,27 +102,12 @@ evaluateBtn.onclick = async () => {
   const payload = {
     scenario: scenarioText.textContent,
     response: userResponse,
-    meta: {
-      industry: industrySelect.value || "Any",
-      department: departmentSelect.value || "Any",
-      stakeholder: stakeholderSelect.value || "Any",
-      mode: modeSelect.value || "filtered"
-    }
+    meta: getMeta()
   };
 
   try {
-    const res = await fetch(EVALUATE_API_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(payload)
-    });
+    const data = await postJson(EVALUATE_API_URL, payload);
 
-    const text = await res.text(); // read as text first for better error messages
-    if (!res.ok) throw new Error(`HTTP ${res.status}: ${text}`);
-
-    const data = JSON.parse(text);
-
-    // If your worker returns { error: ... }
     if (data && data.error) {
       throw new Error(`${data.error}${data.raw ? `\n\nRaw:\n${data.raw}` : ""}`);
     }
