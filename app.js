@@ -10,18 +10,13 @@ const modeSelect = document.getElementById("mode");
 const generateBtn = document.getElementById("generateBtn");
 const evaluateBtn = document.getElementById("evaluateBtn");
 
+const resultEl = document.getElementById("result");
+const toastEl = document.getElementById("toast");
+
 // Worker base URL (no trailing slash)
 const WORKER_BASE_URL = "https://consulting-trainer-api.rashdanhamzah03.workers.dev";
 const GENERATE_API_URL = `${WORKER_BASE_URL}/generate`;
 const EVALUATE_API_URL = `${WORKER_BASE_URL}/evaluate`;
-
-// Fallback if AI generation fails (optional)
-const fallbackScenarios = [
-  "You’re sharp, but we don’t usually take short-term people.",
-  "Your fees are higher than others.",
-  "We already handle this internally.",
-  "Let me think about it and get back to you."
-];
 
 function escapeHtml(str) {
   return String(str)
@@ -39,6 +34,25 @@ function getMeta() {
     stakeholder: stakeholderSelect.value || "Any",
     mode: modeSelect.value || "filtered"
   };
+}
+
+function setLoading(btn, isLoading, labelWhenNotLoading) {
+  btn.disabled = isLoading;
+  if (isLoading) {
+    btn.classList.add("loading");
+  } else {
+    btn.classList.remove("loading");
+    if (labelWhenNotLoading) btn.textContent = labelWhenNotLoading;
+  }
+}
+
+let toastTimer;
+function toast(message) {
+  if (!toastEl) return;
+  toastEl.textContent = message;
+  toastEl.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => toastEl.classList.remove("show"), 2400);
 }
 
 async function postJson(url, payload) {
@@ -60,44 +74,42 @@ async function postJson(url, payload) {
 
 // Generate scenario (AI)
 generateBtn.onclick = async () => {
-  generateBtn.disabled = true;
-  generateBtn.textContent = "Generating...";
+  setLoading(generateBtn, true);
+  generateBtn.textContent = "Generating…";
+  toast("Generating scenario…");
 
   try {
     const data = await postJson(GENERATE_API_URL, { meta: getMeta() });
-
     if (!data?.scenario) throw new Error(`API did not return scenario: ${JSON.stringify(data)}`);
-
     scenarioText.textContent = data.scenario;
+    toast("Scenario ready.");
   } catch (err) {
     console.error(err);
-
-    // Optional fallback so the app still works even if AI fails
-    scenarioText.textContent =
-      fallbackScenarios[Math.floor(Math.random() * fallbackScenarios.length)];
-
-    alert("AI scenario generation failed; using a fallback scenario. Check console for details.");
+    toast("Generation failed. Check console.");
+    alert("Scenario generation failed. Open DevTools → Console for details.");
   } finally {
-    generateBtn.disabled = false;
-    generateBtn.textContent = "Generate Scenario";
+    setLoading(generateBtn, false, "Generate");
   }
 };
 
 // Evaluate response (AI)
 evaluateBtn.onclick = async () => {
   if (!scenarioText.textContent || scenarioText.textContent.includes("Click generate")) {
+    toast("Generate a scenario first.");
     alert("Generate a scenario first.");
     return;
   }
 
   const userResponse = responseInput.value.trim();
   if (!userResponse) {
+    toast("Type your response first.");
     alert("Type your response first.");
     return;
   }
 
-  evaluateBtn.disabled = true;
-  evaluateBtn.textContent = "Evaluating...";
+  setLoading(evaluateBtn, true);
+  evaluateBtn.textContent = "Evaluating…";
+  toast("Evaluating response…");
 
   const payload = {
     scenario: scenarioText.textContent,
@@ -108,11 +120,12 @@ evaluateBtn.onclick = async () => {
   try {
     const data = await postJson(EVALUATE_API_URL, payload);
 
-    if (data && data.error) {
-      throw new Error(`${data.error}${data.raw ? `\n\nRaw:\n${data.raw}` : ""}`);
-    }
+    resultEl.classList.remove("hidden");
+    // retrigger reveal animation
+    resultEl.classList.remove("reveal");
+    void resultEl.offsetWidth; // force reflow
+    resultEl.classList.add("reveal");
 
-    document.getElementById("result").classList.remove("hidden");
     document.getElementById("score").textContent = `Score: ${data.score}/100`;
     document.getElementById("level").textContent = `Level: ${data.level}`;
 
@@ -125,11 +138,25 @@ evaluateBtn.onclick = async () => {
       <h4>Improvements</h4>
       <ul>${improvements.map(i => `<li>${escapeHtml(i)}</li>`).join("")}</ul>
     `;
+
+    // smooth scroll to result
+    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
+    toast("Assessment ready.");
   } catch (err) {
-    alert("Evaluation failed. Open DevTools → Console for details.");
     console.error(err);
+    toast("Evaluation failed. Check console.");
+    alert("Evaluation failed. Open DevTools → Console for details.");
   } finally {
-    evaluateBtn.disabled = false;
-    evaluateBtn.textContent = "Evaluate";
+    setLoading(evaluateBtn, false, "Evaluate");
   }
 };
+
+// Keyboard shortcut: Ctrl/Cmd + Enter to evaluate
+responseInput.addEventListener("keydown", (e) => {
+  const isMac = navigator.platform.toUpperCase().includes("MAC");
+  const mod = isMac ? e.metaKey : e.ctrlKey;
+  if (mod && e.key === "Enter") {
+    e.preventDefault();
+    evaluateBtn.click();
+  }
+});
