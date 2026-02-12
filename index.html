@@ -26,6 +26,7 @@
     </header>
 
     <main class="layout">
+      <!-- LEFT -->
       <section class="card">
         <div class="card-inner">
           <div class="card-head">
@@ -84,7 +85,7 @@
 
           <div class="scenarioShell">
             <div class="scenarioBar">
-              <h2 style="margin:0;font-size:14px;font-weight:720;letter-spacing:.25px;">Generated prompt</h2>
+              <h2 class="h2">Generated prompt</h2>
               <button class="btn btn-primary" id="generateBtn" type="button">Generate</button>
             </div>
 
@@ -92,69 +93,93 @@
               <p id="scenarioText">Click generate to begin.</p>
             </div>
 
-            <p class="subtitle" style="margin:2px 2px 0;color:var(--muted2);font-size:12px;">
+            <p class="fineprint">
               Aim for: clarify → reduce risk → control next step → speak with authority.
             </p>
           </div>
         </div>
       </section>
 
+      <!-- RIGHT (sticky) -->
       <section class="card">
-        <div class="card-inner">
-          <div class="card-head">
-            <div>
-              <h2>Your response</h2>
-              <p>Write what you would say (tight and direct).</p>
-            </div>
-            <div class="kbd" title="Shortcut">
-              <span>Ctrl</span><span>Enter</span>
-            </div>
-          </div>
-
-          <label class="field">
-            <span class="label">Response</span>
-            <textarea id="response" placeholder="Type your response…"></textarea>
-          </label>
-
-          <div class="metaRow">
-            <div class="meter">
-              <div class="meter-top">
-                <span class="meter-label">Conciseness</span>
-                <span class="meter-value" id="conciseLabel">—</span>
+        <div class="card-inner rightSplit">
+          <!-- Main: response + results -->
+          <div class="rightMain">
+            <div class="card-head">
+              <div>
+                <h2>Your response</h2>
+                <p>Write what you would say (tight and direct).</p>
               </div>
-              <div class="meter-bar">
-                <div class="meter-fill" id="conciseFill" style="width:0%"></div>
+              <div class="kbd" title="Shortcut">
+                <span>Ctrl</span><span>Enter</span>
               </div>
             </div>
 
-            <button class="btn btn-secondary" id="evaluateBtn" type="button">Evaluate</button>
-          </div>
+            <label class="field">
+              <span class="label">Response</span>
+              <textarea id="response" placeholder="Type your response…"></textarea>
+            </label>
 
-          <section class="result hidden" id="result" aria-live="polite">
-            <div class="scoreHeader">
-              <div class="ring" aria-hidden="true">
-                <svg viewBox="0 0 120 120">
-                  <circle class="ring-track" cx="60" cy="60" r="46"></circle>
-                  <circle class="ring-progress" cx="60" cy="60" r="46"></circle>
-                </svg>
-                <div class="ring-center">
-                  <div class="ring-score" id="score">Score: —</div>
-                  <div class="ring-badge" id="scoreBadge">—</div>
+            <div class="metaRow">
+              <div class="meter">
+                <div class="meter-top">
+                  <span class="meter-label">Conciseness</span>
+                  <span class="meter-value" id="conciseLabel">—</span>
+                </div>
+                <div class="meter-bar">
+                  <div class="meter-fill" id="conciseFill" style="width:0%"></div>
                 </div>
               </div>
 
-              <div class="scoreSide">
-                <div class="levelTitle" id="level">Level: —</div>
-                <div class="scoreHint">Focus on controlling the next step.</div>
-                <div class="miniActions">
-                  <button class="miniBtn" id="copyBtn" type="button">Copy feedback</button>
-                  <button class="miniBtn" id="newBtn" type="button">New scenario</button>
+              <button class="btn btn-secondary" id="evaluateBtn" type="button">Evaluate</button>
+            </div>
+
+            <section class="result hidden" id="result" aria-live="polite">
+              <div class="scoreHeader">
+                <div class="ring" aria-hidden="true">
+                  <svg viewBox="0 0 120 120">
+                    <circle class="ring-track" cx="60" cy="60" r="46"></circle>
+                    <circle class="ring-progress" cx="60" cy="60" r="46"></circle>
+                  </svg>
+                  <div class="ring-center">
+                    <div class="ring-score" id="score">Score: —</div>
+                    <div class="ring-badge" id="scoreBadge">—</div>
+                  </div>
+                </div>
+
+                <div class="scoreSide">
+                  <div class="levelTitle" id="level">Level: —</div>
+                  <div class="scoreHint">Keep control of the next step.</div>
+                  <div class="miniActions">
+                    <button class="miniBtn" id="copyBtn" type="button">Copy</button>
+                    <button class="miniBtn" id="newBtn" type="button">New</button>
+                  </div>
+                </div>
+              </div>
+
+              <div id="feedback" class="feedback"></div>
+            </section>
+          </div>
+
+          <!-- Sidebar: history queue -->
+          <aside class="rightSide" aria-label="Session history">
+            <div class="sideCard">
+              <div class="sideHead">
+                <div>
+                  <div class="sideTitle">Session</div>
+                  <div class="sideSub" id="sessionStats">—</div>
+                </div>
+                <button class="sideBtn" id="clearHistoryBtn" type="button">Clear</button>
+              </div>
+
+              <div class="queue" id="historyList">
+                <div class="queueEmpty" id="historyEmpty">
+                  No attempts yet.<br>
+                  Evaluate a response to build your queue.
                 </div>
               </div>
             </div>
-
-            <div id="feedback" class="feedback"></div>
-          </section>
+          </aside>
         </div>
       </section>
     </main>
