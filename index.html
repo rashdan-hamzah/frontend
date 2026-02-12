@@ -15,120 +15,131 @@
         <div class="brand-mark" aria-hidden="true"></div>
         <div>
           <h1>Consulting Trainer</h1>
-          <p class="subtitle">Scenario · Response · Partner-level feedback</p>
+          <p class="subtitle">Premium practice for high-stakes conversations</p>
         </div>
       </div>
-      <div class="topbar-actions">
-        <a class="chip" href="#" onclick="return false;">v0.1</a>
-      </div>
+
+      <a class="pill" href="#" onclick="return false;">
+        <span class="pill-dot" aria-hidden="true"></span>
+        Live
+      </a>
     </header>
 
-    <main class="grid">
-      <!-- Left column -->
+    <main class="layout">
+      <!-- LEFT -->
       <section class="card">
-        <div class="card-head">
-          <h2>Scenario setup</h2>
-          <p class="muted">Choose context to shape the scenario.</p>
-        </div>
-
-        <div class="filters">
-          <label class="field">
-            <span class="label">Industry</span>
-            <select id="industry">
-              <option value="">Any</option>
-              <option value="Professional Services">Professional Services</option>
-              <option value="Healthcare">Healthcare</option>
-              <option value="Retail">Retail</option>
-              <option value="Manufacturing">Manufacturing</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span class="label">Department</span>
-            <select id="department">
-              <option value="">Any</option>
-              <option value="Finance">Finance</option>
-              <option value="Operations">Operations</option>
-              <option value="Sales">Sales</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span class="label">Stakeholder</span>
-            <select id="stakeholder">
-              <option value="">Any</option>
-              <option value="Owner">Owner</option>
-              <option value="Managing Partner">Managing Partner</option>
-              <option value="CFO">CFO</option>
-              <option value="Manager">Manager</option>
-            </select>
-          </label>
-
-          <label class="field">
-            <span class="label">Mode</span>
-            <select id="mode">
-              <option value="filtered">Filtered</option>
-              <option value="random">Random</option>
-            </select>
-          </label>
-        </div>
-
-        <div class="divider"></div>
-
-        <div class="scenario">
-          <div class="scenario-head">
-            <h2>Scenario</h2>
-            <button class="btn btn-primary" id="generateBtn" type="button">
-              Generate
-            </button>
-          </div>
-
-          <div class="scenario-body">
-            <p id="scenarioText" class="scenario-text">Click generate to begin.</p>
-          </div>
-
-          <p class="hint">
-            Tip: respond like you’re live with a stakeholder—short, confident, and directive.
-          </p>
-        </div>
-      </section>
-
-      <!-- Right column -->
-      <section class="card">
-        <div class="card-head">
-          <h2>Your response</h2>
-          <p class="muted">Write what you would actually say.</p>
-        </div>
-
-        <label class="field">
-          <span class="label">Response</span>
-          <textarea id="response" placeholder="Type your response…"></textarea>
-        </label>
-
-        <div class="actions">
-          <button class="btn btn-secondary" id="evaluateBtn" type="button">
-            Evaluate
-          </button>
-        </div>
-
-        <section class="result card-inset hidden" id="result" aria-live="polite">
-          <div class="result-top">
-            <h3>Assessment</h3>
-            <div class="scoreline">
-              <div id="score" class="score"></div>
-              <div id="level" class="level"></div>
+        <div class="card-inner">
+          <div class="card-head">
+            <div>
+              <h2>Scenario</h2>
+              <p>Choose context. Generate a realistic stakeholder objection.</p>
+            </div>
+            <div class="kbd" title="Tip">
+              <span>Generate</span>
             </div>
           </div>
 
-          <div id="feedback" class="feedback"></div>
-        </section>
+          <div class="filters">
+            <label class="field">
+              <span class="label">Industry</span>
+              <select id="industry">
+                <option value="">Any</option>
+                <option value="Professional Services">Professional Services</option>
+                <option value="Healthcare">Healthcare</option>
+                <option value="Retail">Retail</option>
+                <option value="Manufacturing">Manufacturing</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Department</span>
+              <select id="department">
+                <option value="">Any</option>
+                <option value="Finance">Finance</option>
+                <option value="Operations">Operations</option>
+                <option value="Sales">Sales</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Stakeholder</span>
+              <select id="stakeholder">
+                <option value="">Any</option>
+                <option value="Owner">Owner</option>
+                <option value="Managing Partner">Managing Partner</option>
+                <option value="CFO">CFO</option>
+                <option value="Manager">Manager</option>
+              </select>
+            </label>
+
+            <label class="field">
+              <span class="label">Mode</span>
+              <select id="mode">
+                <option value="filtered">Filtered</option>
+                <option value="random">Random</option>
+              </select>
+            </label>
+          </div>
+
+          <div class="divider"></div>
+
+          <div class="scenarioShell">
+            <div class="scenarioBar">
+              <h2 style="margin:0;font-size:14px;font-weight:720;letter-spacing:.25px;">Generated prompt</h2>
+              <button class="btn btn-primary" id="generateBtn" type="button">Generate</button>
+            </div>
+
+            <div class="scenarioTextWrap">
+              <p id="scenarioText">Click generate to begin.</p>
+            </div>
+
+            <p class="subtitle" style="margin:2px 2px 0;color:var(--muted2);font-size:12px;">
+              Aim for: clarify → reduce risk → control next step → speak with authority.
+            </p>
+          </div>
+        </div>
+      </section>
+
+      <!-- RIGHT -->
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-head">
+            <div>
+              <h2>Your response</h2>
+              <p>Write what you would say (tight and direct).</p>
+            </div>
+            <div class="kbd" title="Shortcut">
+              <span>Ctrl</span><span>Enter</span>
+            </div>
+          </div>
+
+          <label class="field">
+            <span class="label">Response</span>
+            <textarea id="response" placeholder="Type your response…"></textarea>
+          </label>
+
+          <div class="actions">
+            <button class="btn btn-secondary" id="evaluateBtn" type="button">Evaluate</button>
+          </div>
+
+          <section class="result hidden" id="result" aria-live="polite">
+            <div class="scoreRow">
+              <div id="score"></div>
+              <div id="level"></div>
+            </div>
+            <div id="feedback" class="feedback"></div>
+          </section>
+        </div>
       </section>
     </main>
 
     <footer class="footer">
-      <span class="muted">Built for deliberate practice. Keep responses concise and specific.</span>
+      <span>Make it crisp. No fluff. Always end with a controlled next step.</span>
+      <span class="muted2">Tip: ask 1–2 clarifying questions before pitching.</span>
     </footer>
   </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
 
   <script src="./app.js"></script>
 </body>
