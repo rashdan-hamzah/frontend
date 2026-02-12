@@ -26,7 +26,6 @@
     </header>
 
     <main class="layout">
-      <!-- LEFT -->
       <section class="card">
         <div class="card-inner">
           <div class="card-head">
@@ -100,7 +99,6 @@
         </div>
       </section>
 
-      <!-- RIGHT -->
       <section class="card">
         <div class="card-inner">
           <div class="card-head">
@@ -118,15 +116,43 @@
             <textarea id="response" placeholder="Type your response…"></textarea>
           </label>
 
-          <div class="actions">
+          <div class="metaRow">
+            <div class="meter">
+              <div class="meter-top">
+                <span class="meter-label">Conciseness</span>
+                <span class="meter-value" id="conciseLabel">—</span>
+              </div>
+              <div class="meter-bar">
+                <div class="meter-fill" id="conciseFill" style="width:0%"></div>
+              </div>
+            </div>
+
             <button class="btn btn-secondary" id="evaluateBtn" type="button">Evaluate</button>
           </div>
 
           <section class="result hidden" id="result" aria-live="polite">
-            <div class="scoreRow">
-              <div id="score"></div>
-              <div id="level"></div>
+            <div class="scoreHeader">
+              <div class="ring" aria-hidden="true">
+                <svg viewBox="0 0 120 120">
+                  <circle class="ring-track" cx="60" cy="60" r="46"></circle>
+                  <circle class="ring-progress" cx="60" cy="60" r="46"></circle>
+                </svg>
+                <div class="ring-center">
+                  <div class="ring-score" id="score">Score: —</div>
+                  <div class="ring-badge" id="scoreBadge">—</div>
+                </div>
+              </div>
+
+              <div class="scoreSide">
+                <div class="levelTitle" id="level">Level: —</div>
+                <div class="scoreHint">Focus on controlling the next step.</div>
+                <div class="miniActions">
+                  <button class="miniBtn" id="copyBtn" type="button">Copy feedback</button>
+                  <button class="miniBtn" id="newBtn" type="button">New scenario</button>
+                </div>
+              </div>
             </div>
+
             <div id="feedback" class="feedback"></div>
           </section>
         </div>
