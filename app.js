@@ -19,6 +19,11 @@ const conciseLabel = document.getElementById("conciseLabel");
 const copyBtn = document.getElementById("copyBtn");
 const newBtn = document.getElementById("newBtn");
 
+const historyListEl = document.getElementById("historyList");
+const historyEmptyEl = document.getElementById("historyEmpty");
+const sessionStatsEl = document.getElementById("sessionStats");
+const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+
 // Worker base URL (no trailing slash)
 const WORKER_BASE_URL = "https://consulting-trainer-api.rashdanhamzah03.workers.dev";
 const GENERATE_API_URL = `${WORKER_BASE_URL}/generate`;
@@ -28,7 +33,7 @@ const EVALUATE_API_URL = `${WORKER_BASE_URL}/evaluate`;
 const RING_CIRCUMFERENCE = 289;
 
 // Session history
-const HISTORY_KEY = "consulting_trainer_history_v1";
+const HISTORY_KEY = "consulting_trainer_history_v2";
 const HISTORY_MAX = 5;
 
 function escapeHtml(str) {
@@ -143,11 +148,19 @@ function loadHistory() {
   }
 }
 
-function saveHistoryItem(item) {
+function saveHistory(history) {
+  localStorage.setItem(HISTORY_KEY, JSON.stringify(history.slice(0, HISTORY_MAX)));
+}
+
+function addHistoryItem(item) {
   const history = loadHistory();
   history.unshift(item);
-  const trimmed = history.slice(0, HISTORY_MAX);
-  localStorage.setItem(HISTORY_KEY, JSON.stringify(trimmed));
+  saveHistory(history);
+}
+
+function clearHistory() {
+  localStorage.removeItem(HISTORY_KEY);
+  renderHistory();
 }
 
 function formatTime(ts) {
@@ -163,58 +176,68 @@ function formatTime(ts) {
   }
 }
 
-function renderHistoryIntoFeedback() {
+function computeStats(history) {
+  const attempts = history.length;
+  const bestScore = attempts ? Math.max(...history.map(h => Number(h.score) || 0)) : 0;
+  return { attempts, bestScore };
+}
+
+function renderHistory() {
+  if (!historyListEl) return;
+
   const history = loadHistory();
-  const container = document.getElementById("feedback");
-  if (!container) return;
+  const { attempts, bestScore } = computeStats(history);
 
-  const historyHtml = history.length
-    ? `
-      <h4>Recent attempts</h4>
-      <ul>
-        ${history
-          .map((h, idx) => {
-            const title = `${h.score}/100 · ${escapeHtml(h.level)} · ${escapeHtml(formatTime(h.ts))}`;
-            const preview = escapeHtml((h.scenario || "").slice(0, 70)) + ((h.scenario || "").length > 70 ? "…" : "");
-            return `<li>
-              <button type="button" class="miniBtn" data-hidx="${idx}" style="margin:6px 0;">
-                ${title}<br><span style="opacity:.7;font-weight:600">${preview}</span>
-              </button>
-            </li>`;
-          })
-          .join("")}
-      </ul>
-    `
-    : "";
+  if (sessionStatsEl) {
+    sessionStatsEl.textContent = attempts
+      ? `${attempts} attempt${attempts === 1 ? "" : "s"} · Best ${bestScore}/100`
+      : "No attempts yet";
+  }
 
-  // Append history below whatever feedback is already there
-  container.insertAdjacentHTML("beforeend", historyHtml);
+  // Clear existing items but keep empty placeholder node
+  historyListEl.querySelectorAll(".queueItem").forEach(n => n.remove());
 
-  // Wire click handlers
-  container.querySelectorAll("[data-hidx]").forEach((btn) => {
+  if (historyEmptyEl) {
+    historyEmptyEl.style.display = history.length ? "none" : "block";
+  }
+
+  history.forEach((h, idx) => {
+    const btn = document.createElement("button");
+    btn.type = "button";
+    btn.className = "queueItem";
+    btn.setAttribute("data-hidx", String(idx));
+
+    const scenarioPreview = (h.scenario || "").slice(0, 86);
+    const metaLine = `${h.score}/100 · ${h.level || "—"} · ${formatTime(h.ts)}`;
+
+    btn.innerHTML = `
+      <div class="queueTop">
+        <span>${escapeHtml(metaLine)}</span>
+        <span class="queueMeta">${escapeHtml(scoreBadge(h.score))}</span>
+      </div>
+      <div class="queuePreview">${escapeHtml(scenarioPreview)}${(h.scenario || "").length > 86 ? "…" : ""}</div>
+    `;
+
     btn.addEventListener("click", () => {
-      const idx = Number(btn.getAttribute("data-hidx"));
-      const h = loadHistory()[idx];
-      if (!h) return;
+      const historyNow = loadHistory();
+      const item = historyNow[idx];
+      if (!item) return;
 
-      // Restore scenario + response
-      scenarioText.textContent = h.scenario || "";
-      responseInput.value = h.response || "";
+      scenarioText.textContent = item.scenario || "";
+      responseInput.value = item.response || "";
       updateConcisenessMeter();
 
-      // Restore score/level/ring and feedback HTML from stored strings
       resultEl.classList.remove("hidden");
-      document.getElementById("score").textContent = `Score: ${h.score}/100`;
-      document.getElementById("level").textContent = `Level: ${h.level}`;
-      setRing(h.score);
+      document.getElementById("score").textContent = `Score: ${item.score}/100`;
+      document.getElementById("level").textContent = `Level: ${item.level}`;
+      setRing(item.score);
 
-      document.getElementById("feedback").innerHTML = h.feedbackHtml || "";
-      // Re-render history section after restoring feedbackHtml
-      renderHistoryIntoFeedback();
-
-      toast("Loaded previous attempt.");
+      document.getElementById("feedback").innerHTML = item.feedbackHtml || "";
+      toast("Loaded from queue.");
       resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
     });
+
+    historyListEl.appendChild(btn);
   });
 }
 
@@ -229,12 +252,9 @@ generateBtn.onclick = async () => {
     if (!data?.scenario) throw new Error(`API did not return scenario: ${JSON.stringify(data)}`);
 
     scenarioText.textContent = data.scenario;
-
-    // Reset result and response for a clean “session”
     resultEl?.classList.add("hidden");
     responseInput.value = "";
     updateConcisenessMeter();
-
     toast("Scenario ready.");
   } catch (err) {
     console.error(err);
@@ -292,11 +312,9 @@ evaluateBtn.onclick = async () => {
     `;
 
     document.getElementById("feedback").innerHTML = feedbackHtml;
-
     setRing(data.score);
 
-    // Save to local history (frontend only)
-    saveHistoryItem({
+    addHistoryItem({
       ts: Date.now(),
       score: Number(data.score) || 0,
       level: String(data.level || "—"),
@@ -305,11 +323,10 @@ evaluateBtn.onclick = async () => {
       feedbackHtml
     });
 
-    // Append recent attempts section
-    renderHistoryIntoFeedback();
+    renderHistory();
 
-    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
     toast("Assessment ready.");
+    resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
   } catch (err) {
     console.error(err);
     toast("Evaluation failed. Check console.");
@@ -319,7 +336,7 @@ evaluateBtn.onclick = async () => {
   }
 };
 
-// Copy feedback button
+// Copy button
 copyBtn?.addEventListener("click", async () => {
   try {
     const score = document.getElementById("score")?.textContent || "";
@@ -355,7 +372,13 @@ copyBtn?.addEventListener("click", async () => {
 // New scenario shortcut
 newBtn?.addEventListener("click", () => generateBtn.click());
 
-// Keyboard shortcut: Ctrl/Cmd + Enter to evaluate
+// Clear history
+clearHistoryBtn?.addEventListener("click", () => {
+  clearHistory();
+  toast("History cleared.");
+});
+
+// Keyboard shortcut: Ctrl/Cmd + Enter
 responseInput.addEventListener("keydown", (e) => {
   const isMac = navigator.platform.toUpperCase().includes("MAC");
   const mod = isMac ? e.metaKey : e.ctrlKey;
@@ -368,3 +391,6 @@ responseInput.addEventListener("keydown", (e) => {
 // Live conciseness meter
 responseInput.addEventListener("input", updateConcisenessMeter);
 updateConcisenessMeter();
+
+// Initial render of history on load
+renderHistory();
