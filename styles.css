@@ -116,10 +116,20 @@ body{
   display:grid;
   grid-template-columns: 1.05fr .95fr;
   gap: 16px;
+  align-items: start; /* IMPORTANT for sticky children */
 }
 
 @media (max-width: 940px){
   .layout{ grid-template-columns: 1fr; }
+}
+
+/* Sticky right panel on desktop only */
+@media (min-width: 941px){
+  .layout > section:last-child{
+    position: sticky;
+    top: 18px;               /* distance from top of viewport */
+    align-self: start;
+  }
 }
 
 .card{
@@ -326,7 +336,7 @@ textarea{
   100%{ transform: translateX(120%); }
 }
 
-/* New: concise meter + right-side row */
+/* Concise meter row */
 .metaRow{
   display:flex;
   align-items:flex-end;
@@ -429,7 +439,6 @@ textarea{
 
 .ring-progress{
   fill: none;
-  stroke: url(#grad); /* fallback if not supported */
   stroke: rgba(110,231,255,.85);
   stroke-width: 12;
   stroke-linecap: round;
