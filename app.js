@@ -13,10 +13,19 @@ const evaluateBtn = document.getElementById("evaluateBtn");
 const resultEl = document.getElementById("result");
 const toastEl = document.getElementById("toast");
 
+const conciseFill = document.getElementById("conciseFill");
+const conciseLabel = document.getElementById("conciseLabel");
+
+const copyBtn = document.getElementById("copyBtn");
+const newBtn = document.getElementById("newBtn");
+
 // Worker base URL (no trailing slash)
 const WORKER_BASE_URL = "https://consulting-trainer-api.rashdanhamzah03.workers.dev";
 const GENERATE_API_URL = `${WORKER_BASE_URL}/generate`;
 const EVALUATE_API_URL = `${WORKER_BASE_URL}/evaluate`;
+
+// Ring constants
+const RING_CIRCUMFERENCE = 289; // tuned for r=46 with stroke width; matches CSS dasharray
 
 function escapeHtml(str) {
   return String(str)
@@ -38,9 +47,8 @@ function getMeta() {
 
 function setLoading(btn, isLoading, labelWhenNotLoading) {
   btn.disabled = isLoading;
-  if (isLoading) {
-    btn.classList.add("loading");
-  } else {
+  if (isLoading) btn.classList.add("loading");
+  else {
     btn.classList.remove("loading");
     if (labelWhenNotLoading) btn.textContent = labelWhenNotLoading;
   }
@@ -72,6 +80,57 @@ async function postJson(url, payload) {
   }
 }
 
+function scoreBadge(score) {
+  if (score >= 85) return "Excellent";
+  if (score >= 70) return "Strong";
+  if (score >= 55) return "Mixed";
+  return "Needs work";
+}
+
+function setRing(score) {
+  const ring = resultEl?.querySelector(".ring-progress");
+  const badge = document.getElementById("scoreBadge");
+  if (!ring) return;
+
+  const clamped = Math.max(0, Math.min(100, Number(score) || 0));
+  const offset = RING_CIRCUMFERENCE * (1 - clamped / 100);
+
+  ring.style.strokeDasharray = String(RING_CIRCUMFERENCE);
+  ring.style.strokeDashoffset = String(offset);
+
+  if (badge) badge.textContent = scoreBadge(clamped);
+}
+
+function updateConcisenessMeter() {
+  if (!conciseFill || !conciseLabel) return;
+
+  const text = responseInput.value.trim();
+  const words = text ? text.split(/\s+/).filter(Boolean).length : 0;
+
+  // sweet spot: 35–90 words (for crisp consulting responses)
+  let pct;
+  let label;
+
+  if (words === 0) {
+    pct = 0; label = "—";
+  } else if (words < 25) {
+    pct = 28; label = `${words} words · too short`;
+  } else if (words <= 90) {
+    // map 25..90 to 60..100
+    pct = 60 + ((words - 25) / (90 - 25)) * 40;
+    label = `${words} words · good`;
+  } else if (words <= 160) {
+    // map 90..160 to 100..70
+    pct = 100 - ((words - 90) / (160 - 90)) * 30;
+    label = `${words} words · long`;
+  } else {
+    pct = 65; label = `${words} words · too long`;
+  }
+
+  conciseFill.style.width = `${Math.max(0, Math.min(100, pct))}%`;
+  conciseLabel.textContent = label;
+}
+
 // Generate scenario (AI)
 generateBtn.onclick = async () => {
   setLoading(generateBtn, true);
@@ -81,7 +140,14 @@ generateBtn.onclick = async () => {
   try {
     const data = await postJson(GENERATE_API_URL, { meta: getMeta() });
     if (!data?.scenario) throw new Error(`API did not return scenario: ${JSON.stringify(data)}`);
+
     scenarioText.textContent = data.scenario;
+
+    // Reset result and response for a clean “session”
+    resultEl?.classList.add("hidden");
+    responseInput.value = "";
+    updateConcisenessMeter();
+
     toast("Scenario ready.");
   } catch (err) {
     console.error(err);
@@ -121,9 +187,8 @@ evaluateBtn.onclick = async () => {
     const data = await postJson(EVALUATE_API_URL, payload);
 
     resultEl.classList.remove("hidden");
-    // retrigger reveal animation
     resultEl.classList.remove("reveal");
-    void resultEl.offsetWidth; // force reflow
+    void resultEl.offsetWidth;
     resultEl.classList.add("reveal");
 
     document.getElementById("score").textContent = `Score: ${data.score}/100`;
@@ -139,7 +204,7 @@ evaluateBtn.onclick = async () => {
       <ul>${improvements.map(i => `<li>${escapeHtml(i)}</li>`).join("")}</ul>
     `;
 
-    // smooth scroll to result
+    setRing(data.score);
     resultEl.scrollIntoView({ behavior: "smooth", block: "start" });
     toast("Assessment ready.");
   } catch (err) {
@@ -151,6 +216,42 @@ evaluateBtn.onclick = async () => {
   }
 };
 
+// Copy feedback button (optional UI feature)
+copyBtn?.addEventListener("click", async () => {
+  try {
+    const score = document.getElementById("score")?.textContent || "";
+    const level = document.getElementById("level")?.textContent || "";
+    const feedbackText = document.getElementById("feedback")?.innerText || "";
+    const scenario = scenarioText?.textContent || "";
+    const response = responseInput?.value || "";
+
+    const blob = [
+      "Consulting Trainer Feedback",
+      "",
+      score,
+      level,
+      "",
+      "Scenario:",
+      scenario,
+      "",
+      "Your response:",
+      response,
+      "",
+      "Feedback:",
+      feedbackText
+    ].join("\n");
+
+    await navigator.clipboard.writeText(blob);
+    toast("Copied.");
+  } catch (e) {
+    console.error(e);
+    toast("Copy failed.");
+  }
+});
+
+// New scenario shortcut
+newBtn?.addEventListener("click", () => generateBtn.click());
+
 // Keyboard shortcut: Ctrl/Cmd + Enter to evaluate
 responseInput.addEventListener("keydown", (e) => {
   const isMac = navigator.platform.toUpperCase().includes("MAC");
@@ -160,3 +261,7 @@ responseInput.addEventListener("keydown", (e) => {
     evaluateBtn.click();
   }
 });
+
+// Live conciseness meter
+responseInput.addEventListener("input", updateConcisenessMeter);
+updateConcisenessMeter();
